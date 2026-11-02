@@ -62,9 +62,10 @@ export interface GrokTheme extends GrokPalette {
   chart: [string, string, string, string];
 }
 
-const ts = (size: number, line: number): GrokTextStyle => ({
-  fontSize: `${size}px`,
-  lineHeight: `${line}px`,
+/** 글자 크기·행간은 tokens.css의 --fs-<이름>·--lh-<이름>에서 온다. */
+const ts = (name: string): GrokTextStyle => ({
+  fontSize: `var(--fs-${name})`,
+  lineHeight: `var(--lh-${name})`,
   letterSpacing: "0",
 });
 
@@ -94,17 +95,17 @@ const base: Omit<GrokTheme, "kind"> = {
   font: {
     family: v("font-sans"),
     mono: v("font-mono"),
-    heading1: ts(30, 36),
-    heading2: ts(24, 30),
-    heading3: ts(20, 26),
-    body1: ts(16, 24),
-    subtext: ts(14, 20),
-    table: ts(15, 22),
-    metric: ts(24, 30),
-    body2: ts(13, 18),
-    label: ts(12, 16),
-    caption: ts(11, 16),
-    code: ts(13, 20),
+    heading1: ts("heading1"),
+    heading2: ts("heading2"),
+    heading3: ts("heading3"),
+    body1: ts("body1"),
+    subtext: ts("subtext"),
+    table: ts("table"),
+    metric: ts("metric"),
+    body2: ts("body2"),
+    label: ts("label"),
+    caption: ts("caption"),
+    code: ts("code"),
   },
   weight: { regular: 400, medium: 500, semibold: 600 },
   radius: { sm: 4, md: 8, lg: 12, xl: 16, full: 9999 },

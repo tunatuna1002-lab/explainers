@@ -3,27 +3,32 @@
 /* ── 페이지 틀 (qlabs 방식) ─────────────────────────── */
 .cv-page {
   --cv-main: 700px;
+  --cv-toc: 220px;
+  /* 목차는 왼쪽 끝(사이트 머리 글자와 같은 선)에, 본문은 화면 가운데에 둔다 */
   display: grid;
-  grid-template-columns: 210px minmax(0, var(--cv-main));
+  grid-template-columns: minmax(var(--cv-toc), 1fr) minmax(0, var(--cv-main)) minmax(0, 1fr);
   grid-template-areas:
-    "toc head"
-    "toc body";
-  justify-content: center;
-  column-gap: 56px;
-  padding: 40px 24px 96px;
+    "toc head ."
+    "toc body .";
+  column-gap: 48px;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 40px 24px 112px;
   align-items: start;
+  letter-spacing: var(--tracking-body);
 }
 .cv-page[data-width="wide"] { --cv-main: 960px; }
-.cv-page[data-width="full"] { --cv-main: 1fr; grid-template-columns: 210px minmax(0, 1fr); }
+.cv-page[data-width="full"] { --cv-main: 1fr; grid-template-columns: var(--cv-toc) minmax(0, 1fr); grid-template-areas: "toc head" "toc body"; }
 .cv-page { word-break: keep-all; overflow-wrap: break-word; }
 .cv-head { grid-area: head; min-width: 0; padding-top: 24px; }
 .cv-body { grid-area: body; min-width: 0; }
-.cv-toc-slot { grid-area: toc; position: sticky; top: 28px; align-self: start; padding-top: 52px; max-height: calc(100vh - 28px); overflow-y: auto; }
+.cv-toc-slot { grid-area: toc; justify-self: start; width: var(--cv-toc); position: sticky; top: 28px; align-self: start; padding-top: 60px; max-height: calc(100vh - 28px); overflow-y: auto; }
 .cv-page > .cv-body:only-child,
-.cv-page:not(:has(.cv-toc-slot)) { grid-template-columns: minmax(0, var(--cv-main)); grid-template-areas: "head" "body"; }
+.cv-page:not(:has(.cv-toc-slot)) { grid-template-columns: minmax(0, var(--cv-main)); grid-template-areas: "head" "body"; justify-content: center; }
 
-.cv-title { margin: 0 0 24px; text-wrap: balance; }
-.cv-tldr { padding: 16px 20px 18px; margin: 0 0 8px; }
+.cv-title { margin: 0 0 28px; text-wrap: balance; letter-spacing: var(--tracking-heading); }
+.cv-tldr { padding: 18px 22px 20px; margin: 0 0 8px; }
+.cv-tldr p { font-size: var(--fs-body1); line-height: var(--lh-body1); }
 .cv-tldr-label { font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: 0.14em; margin-bottom: 8px; }
 
 @media (max-width: 1039.98px) {
@@ -31,12 +36,13 @@
   .cv-page[data-width="full"] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "head" "toc" "body";
+    column-gap: 0;
     padding: 24px 20px 72px;
     max-width: calc(var(--cv-main) + 40px);
     margin-inline: auto;
   }
   .cv-page[data-width="full"] { max-width: none; }
-  .cv-toc-slot { position: static; padding-top: 0; max-height: none; overflow: visible; margin: 24px 0 0; }
+  .cv-toc-slot { position: static; width: auto; justify-self: stretch; padding-top: 0; max-height: none; overflow: visible; margin: 24px 0 0; }
 }
 
 /* ── 목차 ─────────────────────────── */
@@ -46,7 +52,7 @@
   display: flex; gap: 8px; align-items: baseline;
   padding: 5px 0 5px 12px;
   border-left: 2px solid var(--border-default);
-  font-size: 13px; line-height: 18px;
+  font-size: 14px; line-height: 20px;
   color: var(--text-secondary); text-decoration: none;
   transition: color var(--motion-hover) var(--motion-easing), background-color var(--motion-hover) var(--motion-easing);
 }
@@ -58,8 +64,12 @@
 .cv-toc-link[data-active="true"] .cv-toc-num { color: var(--text-accent); }
 
 /* ── 절 ─────────────────────────── */
-.cv-section { margin-top: 64px; scroll-margin-top: 24px; }
-.cv-subsection { margin-top: 32px; }
+.cv-section { margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--border-weak); scroll-margin-top: 24px; }
+.cv-subsection { margin-top: 40px; scroll-margin-top: 24px; }
+.cv-h2, .cv-subsection > h3 { letter-spacing: var(--tracking-heading); }
+/* Q&A 묶음(id q1, q2 …)은 가는 선으로 나눠 한 질문씩 읽히게 한다 */
+.cv-subsection[id^="q"] { margin-top: 48px; padding-top: 28px; border-top: 1px dashed var(--border-default); }
+.cv-blocks > .cv-subsection[id^="q"]:first-child { margin-top: 8px; }
 .cv-section > h2 + .cv-blocks,
 .cv-section > p + .cv-blocks { margin-top: 16px; }
 .cv-h2 { display: flex; gap: 12px; align-items: baseline; margin: 0; text-wrap: balance; }
@@ -68,11 +78,12 @@
 .cv-blocks > .cv-figure { margin-block: 16px; }
 .cv-blocks > .cv-figure:first-child { margin-top: 0; }
 .cv-blocks > .cv-figure:last-child { margin-bottom: 0; }
-.cv-subsection > h3 + .cv-blocks { margin-top: 12px; }
+.cv-subsection > h3 + .cv-blocks { margin-top: 16px; }
 .cv-text { overflow-wrap: break-word; word-break: keep-all; }
 
 /* ── Callout / Steps ─────────────────────────── */
-.cv-callout { display: flex; gap: 12px; padding: 16px 20px; }
+.cv-callout { display: flex; gap: 12px; padding: 14px 18px 16px; }
+.cv-callout[data-tone] .cv-callout-lead { margin-bottom: 2px; }
 .cv-callout-icon { flex: none; margin-top: 2px; }
 .cv-steps { list-style: none; margin: 8px 0; padding: 0; }
 .cv-step { display: flex; gap: 14px; }
@@ -127,8 +138,13 @@
 @media (max-width: 640px) { .cv-grid { grid-template-columns: minmax(0, 1fr); } }
 
 /* ── Properties ─────────────────────────── */
-.cv-props { margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.cv-prop { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 16px; }
+.cv-props { margin: 0; display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-weak); }
+.cv-prop { display: grid; grid-template-columns: 124px minmax(0, 1fr); column-gap: 20px; padding: 10px 0; }
+.cv-prop + .cv-prop { border-top: 1px solid var(--border-weak); }
+.cv-prop dt { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; padding-top: 1px; }
+@media (max-width: 560px) {
+  .cv-prop { grid-template-columns: minmax(0, 1fr); row-gap: 2px; }
+}
 .cv-prop dt, .cv-prop dd { margin: 0; }
 .cv-prop dd { overflow-wrap: break-word; word-break: keep-all; }
 
@@ -157,3 +173,15 @@
 .cv-sqrt { display: inline-flex; align-items: stretch; }
 .cv-sqrt-sign { align-self: flex-end; padding-right: 1px; }
 .cv-sqrt-body { padding: 1px 3px 0; }
+
+/* ── 글 안 링크 ─────────────────────────── */
+.cv-page a:not(.cv-toc-link) {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-decoration-color: var(--link-underline);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--motion-hover) var(--motion-easing);
+}
+.cv-page a:not(.cv-toc-link):hover { text-decoration-color: currentColor; }
+.cv-page a:not(.cv-toc-link):focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 2px; }

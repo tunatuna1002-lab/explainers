@@ -57,7 +57,7 @@ export function Section({ heading, id, caption, children }: SectionProps) {
             }}
           >
             {info ? (
-              <span className="cv-num" aria-hidden="true" style={{ color: theme.text.tertiary }}>
+              <span className="cv-num" aria-hidden="true" style={{ color: theme.text.accent }}>
                 {String(info.num).padStart(2, "0")}
               </span>
             ) : null}

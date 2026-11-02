@@ -65,12 +65,20 @@ export function Callout({ lead, tone, children }: CalloutProps) {
         warning: { box: theme.fill.warningSubtle, head: theme.text.warning, body: theme.text.warningDeep },
         danger: { box: theme.fill.dangerSubtle, head: theme.text.danger, body: theme.text.dangerDeep },
       }[tone]
-    : { box: theme.fill.secondary, head: theme.text.primary, body: theme.text.primary };
+    : { box: theme.bg.subtle, head: theme.text.primary, body: theme.text.primary };
+  // 가독성: 본문은 늘 먹색으로 두고, 판정 색은 왼쪽 선·아이콘·첫 줄에만 쓴다.
+  const rule = tone ? palette.head : theme.border.strong;
   return (
     <div
       className="cv-callout"
       role="note"
-      style={{ background: palette.box, borderRadius: theme.radius.lg, color: palette.body }}
+      data-tone={tone ?? "neutral"}
+      style={{
+        background: palette.box,
+        borderLeft: `3px solid ${rule}`,
+        borderRadius: `0 ${theme.radius.md}px ${theme.radius.md}px 0`,
+        color: theme.text.primary,
+      }}
     >
       {tone ? (
         <svg
@@ -90,7 +98,7 @@ export function Callout({ lead, tone, children }: CalloutProps) {
       ) : null}
       <div style={{ minWidth: 0 }}>
         {lead ? (
-          <div style={{ fontWeight: 600, color: palette.head, fontSize: theme.font.body1.fontSize, lineHeight: theme.font.body1.lineHeight }}>
+          <div className="cv-callout-lead" style={{ fontWeight: 600, color: palette.head, fontSize: theme.font.body1.fontSize, lineHeight: theme.font.body1.lineHeight }}>
             {lead}
           </div>
         ) : null}
@@ -183,15 +191,16 @@ export function Table({ columns, rows, emphasis, align }: TableProps) {
   });
   const wide = width >= 5;
   const toneColor = (t?: Tone) => (t ? theme.text[t] : undefined);
+  // 가독성: 세로선과 바깥 상자를 빼고, 머리줄 아래 진한 선과 행 사이 가는 선만 둔다.
   const base = {
-    padding: "10px 14px",
-    borderLeft: `0.5px solid ${theme.border.default}`,
-    borderTop: `0.5px solid ${theme.border.default}`,
+    padding: "11px 16px 11px 0",
+    borderLeft: "none",
+    borderTop: `1px solid ${theme.border.weak}`,
   } as const;
   return (
     <div
       className="cv-table-wrap cv-figure"
-      style={{ border: `0.5px solid ${theme.border.default}`, borderRadius: theme.radius.md }}
+      style={{ borderTop: `1.5px solid ${theme.border.strong}`, borderBottom: `1.5px solid ${theme.border.strong}` }}
     >
       <table className="cv-table" style={{ minWidth: wide ? "max-content" : undefined }}>
         <thead>
@@ -203,11 +212,11 @@ export function Table({ columns, rows, emphasis, align }: TableProps) {
                 style={{
                   ...base,
                   borderTop: "none",
-                  borderLeft: i === 0 ? "none" : base.borderLeft,
+                  borderBottom: `1px solid ${theme.border.strong}`,
                   textAlign: ends[i] ? "right" : "left",
                   fontSize: theme.font.subtext.fontSize,
                   lineHeight: theme.font.subtext.lineHeight,
-                  fontWeight: 500,
+                  fontWeight: 600,
                   color: theme.text.secondary,
                   whiteSpace: wide || ends[i] ? "nowrap" : undefined,
                 }}
@@ -228,7 +237,7 @@ export function Table({ columns, rows, emphasis, align }: TableProps) {
                     key={c}
                     style={{
                       ...base,
-                      borderLeft: c === 0 ? "none" : base.borderLeft,
+                      borderTop: r === 0 ? "none" : base.borderTop,
                       textAlign: ends[c] ? "right" : "left",
                       fontSize: theme.font.table.fontSize,
                       lineHeight: theme.font.table.lineHeight,

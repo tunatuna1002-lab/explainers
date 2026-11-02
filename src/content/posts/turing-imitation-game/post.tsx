@@ -203,7 +203,10 @@ const QAS: QA[] = [
 function NoteBox({ id }: { id: string }) {
   const note = NOTES[id];
   return (
-    <Callout lead={`${id} · ${note.verdict}: Moonlight "${note.claim}"`} tone={TONE[note.verdict]}>
+    <Callout lead={`${id} · ${note.verdict}`} tone={TONE[note.verdict]}>
+      <span style={{ display: "block", color: "var(--text-secondary)", marginBottom: 4 }}>
+        Moonlight: “{note.claim}”
+      </span>
       {note.body}
       {note.links ? (
         <>

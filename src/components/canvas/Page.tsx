@@ -74,9 +74,13 @@ export function Page({ title, summary, width = "column", lang = "en", children }
             {summary ? (
               <aside
                 className="cv-tldr"
-                style={{ background: theme.fill.secondary, borderRadius: theme.radius.lg }}
+                style={{
+                  background: theme.bg.subtle,
+                  borderLeft: `3px solid ${theme.text.accent}`,
+                  borderRadius: `0 ${theme.radius.md}px ${theme.radius.md}px 0`,
+                }}
               >
-                <div className="cv-tldr-label" style={{ color: theme.text.secondary }}>
+                <div className="cv-tldr-label" style={{ color: theme.text.accent }}>
                   TL;DR
                 </div>
                 <p style={{ margin: 0, color: theme.text.primary }}>{summary}</p>
