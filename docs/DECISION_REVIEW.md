@@ -81,3 +81,27 @@
 - 어두움 모드는 스크린샷을 찍어 일부(히트맵·막대·수식·단계)만 눈으로 확인했다. 어두움에서 낮은 값(진한 파랑)과 값 0(회색) 칸의 대비가 약하다.
 - 8단계 문구 불일치(Q2), 배포 대상(Q3), 공개 범위(Q4)는 그대로 열려 있다. 배포·push는 하지 않았다.
 - `astro check`는 `scripts/`를 제외한다(tsconfig `exclude`).
+
+## 배포 기록
+- 날짜: 2026-11-02
+- GitHub 저장소: https://github.com/tunatuna1002-lab/explainers (public). 이유: 비밀값이 없는 공부 글이고, Vercel Hobby 개인 저장소 연결과 공유가 쉽다. 저장소 생성과 push를 마쳤다.
+- 배포 방식: Vercel CLI가 로그인되어 있지 않아 `npx vercel deploy --temporary --yes`로 익명 임시 배포를 했다. 임시 배포는 60분 후 만료된다. claim 링크로 계정에 귀속할 수 있다(claim 코드는 이 문서에 적지 않는다).
+- 임시 URL: https://agile-zenith-j93fekf.tmp.now
+- 확인: curl로 `/`와 `/posts/llm/` 둘 다 200을 받았다.
+- 남은 일: 영구 배포는 동원이 `vercel login`을 하거나 Vercel 대시보드에서 GitHub 저장소를 Import해야 한다.
+
+## 리뷰: 원본 Page와 다른 점
+비교 대상: `handoff/llm-page.tsx`, `canvas-kit-types/`(reference.md, tokens.d.ts 포함), `shots/*.png`, 임시 URL의 렌더 결과(Playwright로 1440px·390px 측정).
+
+전제: `post.tsx`와 원본의 차이는 import 줄 하나다(diff로 확인). 원본 Page의 렌더 화면은 자료에 없다. 따라서 아래 항목은 키트 규칙과 비교한 결과이며, 픽셀 비교가 아니다.
+
+1. **[높음·확인] Heatmap이 390px에서 마지막 열을 가린다.** 칸이 54px로 고정되어 보이는 폭 308px보다 내용(367px)이 넓다. 첫 화면에 `?` 열이 보이지 않는다. 키트는 칸이 블록 폭을 나눠 쓰고(최대 54px), 칸이 12px보다 좁아질 때만 스크롤한다(`heatmap.d.ts`). 원인: `canvas.css:109`의 `min-width: max-content`.
+2. **[높음·확인/추정] 색 hex가 임시값이다.** 임시값인 것은 확인했다(`tokens.css:4`, D2). 키트에 hex가 없어 실제 색과 얼마나 다른지는 알 수 없다(추정). 잉크 비율·글자 크기·radius는 키트 주석과 같다.
+3. **[중간·확인] 가로 스크롤 영역에 가장자리 fade가 없다.** 키트는 Table·Heatmap·Diagram에 "fading at the edge"를 둔다. `src/components/canvas/`에는 mask·gradient가 없다. 390px에서 Diagram은 308/436px, Table은 348/354px, Heatmap은 308/367px로 넘치지만 더 있다는 표시가 없다. Diagram의 되돌림 라벨은 첫 화면에서 "아니오: 글"까지만 보인다(`mobile.png`).
+4. **[중간·확인] Table 라벨 열의 색이 다르다.** `tokens.d.ts:35`는 표 라벨 열을 잉크 60%(`text.secondary`)로 정한다. 사이트는 모든 칸이 `text.primary`다(`blocks.tsx:237`, 측정값 `rgb(17, 17, 17)`).
+5. **[중간·확인] `areaAlpha`·`bandAlpha`를 키트 방식으로 쓸 수 없다.** 키트는 `${color}${areaAlpha}`로 이어 붙인다. 사이트는 값이 `var(--…)` 문자열이라 이어 붙이면 잘못된 CSS가 된다(`theme.ts:118-119`). 첫 글은 쓰지 않아 지금 화면에는 영향이 없다. 다음 글에서 조용히 틀어질 수 있다.
+6. **[중간·추정] 글꼴과 자간이 원본과 다를 수 있다.** 키트 글꼴은 "host가 넣으면 XVF, 아니면 시스템 글꼴"이다(`hooks.d.ts:14`). regular는 XVF가 Mac에서 425다. 사이트는 시스템 글꼴과 400을 쓴다(D12). `letterSpacing`은 전부 `"0"`이고(`theme.ts:68`) 키트의 실제 값은 자료에 없다.
+7. **[낮음·확인, SPEC 의도] 배치 틀이 키트 기본과 다르다.** 왼쪽 sticky 목차(키트는 테두리 상자), TL;DR 상자(키트는 제목 아래 요약, `text.secondary`), 절 번호가 그렇다. SPEC의 qlabs 틀을 따른 결과다. 고칠 대상이 아니라 기록만 한다.
+8. **[낮음·확인] 목차의 현재 항목 표시가 다르다.** 사이트는 accent 색과 굵기 600이다(`canvas.css:57-58`). 키트는 medium 굵기만 쓰고(`toc.d.ts`), 상태 단어 외의 글자에 색을 넣지 않는다(`components.d.ts`). 왼쪽 목차 틀과는 별개로 맞출 수 있다.
+9. **[낮음·확인/추정] Sqrt의 √와 윗줄 사이가 떠 있다.** 스크린샷에서 √ 뒤에 틈이 있고 윗줄이 기호에 닿지 않는다(확인). 키트의 실제 조판을 볼 수 없어 얼마나 다른지는 알 수 없다(추정). 값 `d_k`를 그대로 표시하는 것은 원본 문자열과 같다.
+10. **[낮음·확인] 첫 글이 쓰지 않는 키트 API가 다르다.** `wide`가 960px이다(키트는 최대 1280px, `canvas.css:16`). Section의 `actions`·`collapsible`과 Grid의 `joined`·`plain`이 없다(D8). 첫 글 화면에는 영향이 없다.
