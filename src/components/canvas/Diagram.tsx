@@ -243,10 +243,6 @@ export function Diagram({ nodes: inputNodes, edges: inputEdges, direction = "ver
   const width = maxX + PAD;
   const height = maxY + PAD;
   const stroke = theme.text.tertiary;
-  const accent = (n: DiagramNode) =>
-    n.series !== undefined && n.series >= 0 && n.series < theme.dataviz.categorical.length
-      ? theme.dataviz.categorical[n.series]
-      : theme.dataviz.other;
 
   return (
     <ChartCard>
@@ -303,11 +299,10 @@ export function Diagram({ nodes: inputNodes, edges: inputEdges, direction = "ver
                   height: g.h,
                   background: card ? theme.bg.base : undefined,
                   border: card ? `1px solid ${theme.border.default}` : undefined,
-                  borderLeft: accented ? `4px solid ${accent(g.node)}` : undefined,
                   borderRadius: kind === "terminal" ? theme.radius.full : theme.radius.md,
                   alignItems: accented ? "flex-start" : "center",
                   textAlign: accented ? "left" : "center",
-                  padding: accented ? "0 16px 0 12px" : "0 12px",
+                  padding: accented ? "0 16px 0 15px" : "0 12px", // 왼쪽 회색 굵은 선 없이 1px 테두리만 (2026-11-02 동원 요청)
                 }}
               >
                 <span
