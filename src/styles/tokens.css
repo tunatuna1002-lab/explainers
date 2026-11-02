@@ -2,7 +2,8 @@
  * 디자인 토큰의 유일한 값 원본이다. 밝음은 :root, 어두움은 prefers-color-scheme: dark.
  * 잉크 비율·글자 크기·radius·간격은 키트 tokens.d.ts 주석 값을 따른다.
  * 색상 hex는 자료에 없어 임시값이다(docs/DECISION_REVIEW.md D2). 실제 값을 받으면 이 파일만 고친다.
- * 2026-11-02 가독성 조정: 종이·먹 색(살짝 따뜻한 미색 바탕, 순흑 대신 먹색), 색은 링크·판정·현재 위치에만 쓴다.
+ * 2026-11-02 쿨톤으로 변경: 푸른 기가 아주 옅은 흰 바탕, 남색 기운의 먹색 글자, 강철빛 파랑(petrol blue)은 가는 선·링크·번호에만 쓴다.
+ * 참고: qlabs.sh(slate 계열)와 openai.com 글 페이지. qlabs의 royal blue(#1d4ed8)·slate 바탕과는 색상을 다르게 잡았다.
  * 글자 크기·행간도 여기서 정한다(theme.ts는 var(--fs-…)만 가리킨다). 한국어 장문 기준 본문 17px, 행간 약 1.75.
  */
 :root {
@@ -15,7 +16,7 @@
   --fs-heading1: 34px;  --lh-heading1: 44px;
   --fs-heading2: 25px;  --lh-heading2: 34px;
   --fs-heading3: 20px;  --lh-heading3: 30px;
-  --fs-body1: 17px;     --lh-body1: 30px;
+  --fs-body1: 17px;     --lh-body1: 29px;
   --fs-subtext: 15px;   --lh-subtext: 26px;
   --fs-table: 15px;     --lh-table: 25px;
   --fs-metric: 24px;    --lh-metric: 30px;
@@ -26,45 +27,45 @@
   --tracking-body: -0.005em;
   --tracking-heading: -0.02em;
 
-  /* 종이와 먹 */
-  --bg-base: #faf8f3;
-  --bg-subtle: #f3efe6;
-  --bg-elevated: #fffdf9;
+  /* 쿨톤: 옅은 푸른 흰 바탕과 남색 먹 */
+  --bg-base: #fbfcfd;
+  --bg-subtle: #f0f4f7;
+  --bg-elevated: #ffffff;
 
-  --text-primary: #24221e;
-  --text-secondary: rgb(36 34 30 / 0.7);
-  --text-tertiary: rgb(36 34 30 / 0.5);
+  --text-primary: #17202b;
+  --text-secondary: #4b5867;
+  --text-tertiary: #7b8796;
   --text-on-color: #ffffff;
-  --text-on-primary: #faf8f3;
-  --text-accent: #245a8a;
-  --text-success: #2f6b3a;
-  --text-warning: #8a5d10;
-  --text-danger: #a53a2a;
-  --text-accent-deep: #1a3f63;
-  --text-success-deep: #1f4a27;
-  --text-warning-deep: #5e3f0a;
-  --text-danger-deep: #6f2419;
+  --text-on-primary: #fbfcfd;
+  --text-accent: #1f6a94;
+  --text-success: #2e6b4f;
+  --text-warning: #94650a;
+  --text-danger: #b0283f;
+  --text-accent-deep: #164d6c;
+  --text-success-deep: #1f4a37;
+  --text-warning-deep: #5f4106;
+  --text-danger-deep: #771b2b;
 
-  --fill-primary: #24221e;
-  --fill-primary-hover: rgb(36 34 30 / 0.85);
-  --fill-secondary: #efeae0;
-  --fill-secondary-hover: #e6e0d3;
-  --fill-hover: rgb(36 34 30 / 0.05);
-  --fill-pressed: rgb(36 34 30 / 0.08);
-  --fill-accent: #245a8a;
-  --fill-control-checked: #24221e;
-  --fill-accent-subtle: rgb(36 90 138 / 0.06);
-  --fill-success-subtle: rgb(47 107 58 / 0.06);
-  --fill-warning-subtle: rgb(160 110 20 / 0.08);
-  --fill-danger-subtle: rgb(165 58 42 / 0.06);
+  --fill-primary: #17202b;
+  --fill-primary-hover: rgb(23 32 43 / 0.85);
+  --fill-secondary: #e9eef3;
+  --fill-secondary-hover: #dfe6ed;
+  --fill-hover: rgb(23 32 43 / 0.045);
+  --fill-pressed: rgb(23 32 43 / 0.08);
+  --fill-accent: #1f6a94;
+  --fill-control-checked: #17202b;
+  --fill-accent-subtle: rgb(31 106 148 / 0.06);
+  --fill-success-subtle: rgb(46 107 79 / 0.06);
+  --fill-warning-subtle: rgb(148 101 10 / 0.07);
+  --fill-danger-subtle: rgb(176 40 63 / 0.05);
 
-  --border-subtle: rgb(36 34 30 / 0.06);
-  --border-weak: rgb(36 34 30 / 0.1);
-  --border-default: rgb(36 34 30 / 0.16);
-  --border-strong: rgb(36 34 30 / 0.4);
-  --border-focus: rgb(36 90 138 / 0.6);
+  --border-subtle: #eef2f5;
+  --border-weak: #e3e9ee;
+  --border-default: #d4dce4;
+  --border-strong: #9aa9b8;
+  --border-focus: rgb(31 106 148 / 0.55);
 
-  --link-underline: rgb(36 90 138 / 0.35);
+  --link-underline: rgb(31 106 148 / 0.32);
 
   /* 데이터 색: categorical·other·negative는 양 모드 같다 */
   --dv-cat-0: #2f6fed;
@@ -88,44 +89,44 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-base: #1b1a17;
-    --bg-subtle: #23221e;
-    --bg-elevated: #24231f;
+    --bg-base: #0f1419;
+    --bg-subtle: #161d25;
+    --bg-elevated: #18202a;
 
-    --text-primary: #e8e3d9;
-    --text-secondary: rgb(232 227 217 / 0.72);
-    --text-tertiary: rgb(232 227 217 / 0.5);
+    --text-primary: #e2e8ee;
+    --text-secondary: #a5b1be;
+    --text-tertiary: #76828f;
     --text-on-color: #ffffff;
-    --text-on-primary: #1b1a17;
-    --text-accent: #8db6dc;
-    --text-success: #8cc59a;
-    --text-warning: #d8b065;
-    --text-danger: #e59584;
-    --text-accent-deep: #c4dbef;
-    --text-success-deep: #c3e4cb;
+    --text-on-primary: #0f1419;
+    --text-accent: #7db4d8;
+    --text-success: #86c2a3;
+    --text-warning: #d9b066;
+    --text-danger: #ec8f9e;
+    --text-accent-deep: #bcdcf0;
+    --text-success-deep: #c2e3d1;
     --text-warning-deep: #f0d9a8;
-    --text-danger-deep: #f4c8bd;
+    --text-danger-deep: #f6c5cd;
 
-    --fill-primary: #e8e3d9;
-    --fill-primary-hover: rgb(232 227 217 / 0.85);
-    --fill-secondary: #2a2925;
-    --fill-secondary-hover: #34322d;
-    --fill-hover: rgb(232 227 217 / 0.06);
-    --fill-pressed: rgb(232 227 217 / 0.1);
-    --fill-accent: #8db6dc;
-    --fill-control-checked: #e8e3d9;
-    --fill-accent-subtle: rgb(141 182 220 / 0.08);
-    --fill-success-subtle: rgb(140 197 154 / 0.08);
-    --fill-warning-subtle: rgb(216 176 101 / 0.09);
-    --fill-danger-subtle: rgb(229 149 132 / 0.08);
+    --fill-primary: #e2e8ee;
+    --fill-primary-hover: rgb(226 232 238 / 0.85);
+    --fill-secondary: #1d2630;
+    --fill-secondary-hover: #26313d;
+    --fill-hover: rgb(226 232 238 / 0.06);
+    --fill-pressed: rgb(226 232 238 / 0.1);
+    --fill-accent: #7db4d8;
+    --fill-control-checked: #e2e8ee;
+    --fill-accent-subtle: rgb(125 180 216 / 0.08);
+    --fill-success-subtle: rgb(134 194 163 / 0.08);
+    --fill-warning-subtle: rgb(217 176 102 / 0.06);
+    --fill-danger-subtle: rgb(236 143 158 / 0.05);
 
-    --border-subtle: rgb(232 227 217 / 0.06);
-    --border-weak: rgb(232 227 217 / 0.1);
-    --border-default: rgb(232 227 217 / 0.16);
-    --border-strong: rgb(232 227 217 / 0.4);
-    --border-focus: rgb(141 182 220 / 0.6);
+    --border-subtle: rgb(226 232 238 / 0.05);
+    --border-weak: rgb(226 232 238 / 0.09);
+    --border-default: rgb(226 232 238 / 0.15);
+    --border-strong: rgb(226 232 238 / 0.36);
+    --border-focus: rgb(125 180 216 / 0.6);
 
-    --link-underline: rgb(141 182 220 / 0.4);
+    --link-underline: rgb(125 180 216 / 0.38);
 
     /* 어두움에서는 단계를 뒤집어 1단계가 조용한 쪽이 되게 한다 */
     --dv-seq-1: #1b45a8;

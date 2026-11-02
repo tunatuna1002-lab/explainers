@@ -65,7 +65,7 @@ export function Page({ title, summary, width = "column", lang = "en", children }
               style={{
                 fontSize: theme.font.heading1.fontSize,
                 lineHeight: theme.font.heading1.lineHeight,
-                fontWeight: 700,
+                fontWeight: 650,
                 color: theme.text.primary,
               }}
             >
@@ -76,7 +76,7 @@ export function Page({ title, summary, width = "column", lang = "en", children }
                 className="cv-tldr"
                 style={{
                   background: theme.bg.subtle,
-                  borderLeft: `3px solid ${theme.text.accent}`,
+                  borderLeft: `2px solid ${theme.text.accent}`,
                   borderRadius: `0 ${theme.radius.md}px ${theme.radius.md}px 0`,
                 }}
               >

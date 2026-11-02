@@ -66,7 +66,7 @@
 .cv-subsection { margin-top: 40px; scroll-margin-top: 24px; }
 .cv-h2, .cv-subsection > h3 { letter-spacing: var(--tracking-heading); }
 /* Q&A 묶음(id q1, q2 …)은 가는 선으로 나눠 한 질문씩 읽히게 한다 */
-.cv-subsection[id^="q"] { margin-top: 48px; padding-top: 28px; border-top: 1px dashed var(--border-default); }
+.cv-subsection[id^="q"] { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--border-weak); }
 .cv-blocks > .cv-subsection[id^="q"]:first-child { margin-top: 8px; }
 .cv-section > h2 + .cv-blocks,
 .cv-section > p + .cv-blocks { margin-top: 16px; }
@@ -137,7 +137,7 @@
 
 /* ── Properties ─────────────────────────── */
 .cv-props { margin: 0; display: flex; flex-direction: column; gap: 0; border-top: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-weak); }
-.cv-prop { display: grid; grid-template-columns: 124px minmax(0, 1fr); column-gap: 20px; padding: 10px 0; }
+.cv-prop { display: grid; grid-template-columns: 148px minmax(0, 1fr); column-gap: 20px; padding: 10px 0; }
 .cv-prop + .cv-prop { border-top: 1px solid var(--border-weak); }
 .cv-prop dt { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; padding-top: 1px; }
 @media (max-width: 560px) {

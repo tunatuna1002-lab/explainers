@@ -75,7 +75,7 @@ export function Callout({ lead, tone, children }: CalloutProps) {
       data-tone={tone ?? "neutral"}
       style={{
         background: palette.box,
-        borderLeft: `3px solid ${rule}`,
+        borderLeft: `2px solid ${rule}`,
         borderRadius: `0 ${theme.radius.md}px ${theme.radius.md}px 0`,
         color: theme.text.primary,
       }}

@@ -52,7 +52,7 @@ export function Section({ heading, id, caption, children }: SectionProps) {
             style={{
               fontSize: theme.font.heading2.fontSize,
               lineHeight: theme.font.heading2.lineHeight,
-              fontWeight: 700,
+              fontWeight: 600,
               color: theme.text.primary,
             }}
           >
