@@ -31,7 +31,9 @@ export interface DiagramProps {
 const LABEL = 14;
 const DETAIL = 12;
 const EDGE_LABEL = 12;
-const PAD = 24;
+// 화살표 이름표 줄바꿈 폭. 넓으면 흐름도가 모바일 화면(카드 안쪽 약 308px)을 넘친다. (2026-11-02 동원 승인)
+const EDGE_LABEL_MAX = 56;
+const PAD = 12; // 흐름도 바깥 여백 (24 → 12, 모바일 폭 확보)
 const RANK_GAP = 32; // 선 길이 16px (2026-11-02 동원 피드백, DESIGN_FEEDBACK R1)
 const NODE_GAP = 40;
 const CLEAR = 8; // 선 끝과 노드 면 사이
@@ -214,8 +216,8 @@ export function Diagram({ nodes: inputNodes, edges: inputEdges, direction = "ver
     let text: Drawn["text"] = null;
     if (e.label || e.detail) {
       const lines = [
-        ...(e.label ? wrap(e.label, EDGE_LABEL, 160).map((t) => ({ t, faint: false })) : []),
-        ...(e.detail ? wrap(e.detail, EDGE_LABEL, 160).map((t) => ({ t, faint: true })) : []),
+        ...(e.label ? wrap(e.label, EDGE_LABEL, EDGE_LABEL_MAX).map((t) => ({ t, faint: false })) : []),
+        ...(e.detail ? wrap(e.detail, EDGE_LABEL, EDGE_LABEL_MAX).map((t) => ({ t, faint: true })) : []),
       ];
       const mid = { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
       const widest = Math.max(...lines.map((l) => textWidth(l.t, EDGE_LABEL)));

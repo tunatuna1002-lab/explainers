@@ -1,7 +1,7 @@
 /*
  * 디자인 토큰의 유일한 값 원본이다. 밝음은 :root, 어두움은 prefers-color-scheme: dark.
  * 잉크 비율·글자 크기·radius·간격은 키트 tokens.d.ts 주석 값을 따른다.
- * 색상 hex는 자료에 없어 임시값이다(docs/DECISION_REVIEW.md D2). 실제 값을 받으면 이 파일만 고친다.
+ * 색상 hex는 처음에 임시값이었으나(docs/DECISION_REVIEW.md D2), 2026-11-02 동원이 승인한 확정값이다. 색을 바꿀 때는 이 파일만 고치고, 먼저 동원에게 확인한다.
  * 2026-11-02 쿨톤으로 변경: 푸른 기가 아주 옅은 흰 바탕, 남색 기운의 먹색 글자, 강철빛 파랑(petrol blue)은 가는 선·링크·번호에만 쓴다.
  * 참고: qlabs.sh(slate 계열)와 openai.com 글 페이지. qlabs의 royal blue(#1d4ed8)·slate 바탕과는 색상을 다르게 잡았다.
  * 글자 크기·행간도 여기서 정한다(theme.ts는 var(--fs-…)만 가리킨다). 한국어 장문 기준 본문 17px, 행간 약 1.75.
@@ -66,6 +66,7 @@
   --border-focus: rgb(31 106 148 / 0.55);
 
   --link-underline: rgb(31 106 148 / 0.32);
+  --scroll-shadow: rgb(23 32 43 / 0.12);
 
   /* 데이터 색: categorical·other·negative는 양 모드 같다 */
   --dv-cat-0: #2f6fed;
@@ -127,6 +128,7 @@
     --border-focus: rgb(125 180 216 / 0.6);
 
     --link-underline: rgb(125 180 216 / 0.38);
+    --scroll-shadow: rgb(0 0 0 / 0.5);
 
     /* 어두움에서는 단계를 뒤집어 1단계가 조용한 쪽이 되게 한다 */
     --dv-seq-1: #1b45a8;

@@ -122,6 +122,15 @@
 
 /* Diagram */
 .cv-diagram-scroll { overflow-x: auto; }
+/* 옆으로 넘칠 때 가장자리에 옅은 그림자를 띄워 "더 있다"를 알린다(스크롤 그림자, CSS만 사용) */
+.cv-diagram-scroll, .cv-table-wrap, .cv-heat-scroll {
+  background:
+    linear-gradient(to right, var(--bg-base) 30%, transparent) left / 24px 100% no-repeat local,
+    linear-gradient(to left, var(--bg-base) 30%, transparent) right / 24px 100% no-repeat local,
+    linear-gradient(to right, var(--scroll-shadow), transparent) left / 12px 100% no-repeat scroll,
+    linear-gradient(to left, var(--scroll-shadow), transparent) right / 12px 100% no-repeat scroll;
+}
+@media (max-width: 560px) { .cv-card { padding: 12px; } }
 .cv-diagram-scroll:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
 .cv-diagram { position: relative; margin-inline: auto; flex: none; }
 .cv-node { position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
