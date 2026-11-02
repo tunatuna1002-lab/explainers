@@ -98,7 +98,7 @@ const NOTES: Record<string, Note> = {
   v11: {
     verdict: "부분",
     claim: "튜링이 인용하는 인물은 Babbage, Lovelace, Hartree, Jefferson, Gödel, Church 등뿐이다",
-    body: "본문에는 Kleene(1935), Rosser, Turing(1937)도 나온다(§6 수학적 반론). 비엔나 학파·브리지먼 인용이 없다는 핵심 주장은 원문 검색 결과와 맞다. 단, 읽은 PDF에는 참고문헌 목록이 없어 목록 전체는 대조하지 못했다.",
+    body: "본문에는 Kleene(1935), Rosser, Turing(1937)도 나온다(§6 수학적 반론). 비엔나 학파·브리지먼 인용이 없다는 답변의 핵심 내용은 원문 검색 결과와 맞다. 단, 읽은 PDF에는 참고문헌 목록이 없어 목록 전체는 대조하지 못했다.",
   },
   v12: {
     verdict: "해석",
@@ -127,10 +127,10 @@ const QAS: QA[] = [
   {
     n: 1,
     title: "질문 재정의하기",
-    question: '따로 질문을 쓰지 않고, 아래 문장을 선택해 설명을 요청했다. ("질문 재정의하기"는 Moonlight가 붙인 제목)',
+    question: '따로 질문을 쓰지 않고, 아래 문장을 선택해 설명을 요청했다. ("질문 재정의하기"는 Moonlight AI가 붙인 제목)',
     where: "1쪽, §1 The Imitation Game · 설명 스레드",
     quote: "Instead of attempting such a definition I shall replace the question by another, which is closely related to it and is expressed in relatively unambiguous words.",
-    answer: '튜링은 "think"를 정의하지 않고, 관찰 가능한 게임으로 질문을 바꾼다. 일상 용법으로 정의하면 Gallup 여론조사 같은 결론이 되기 때문이다. Moonlight는 이를 조작적 정의(operational definition)로 설명하고, 이 문장을 "철학적 본질론 대신 행동주의적 테스트를 택하겠다"는 논문 전체의 방법론적 선언으로 봤다. 후속 질문 3개(중국어 방 반례, LLM 벤치마크의 편향, 의식 문제를 넘어간 것의 평가)를 제안했다.',
+    answer: '튜링은 "think"를 정의하지 않고, 관찰 가능한 게임으로 질문을 바꾼다. 일상 용법으로 정의하면 Gallup 여론조사 같은 결론이 되기 때문이다. Moonlight AI는 이를 조작적 정의(operational definition)로 설명하고, 이 문장을 "철학적 본질론 대신 행동주의적 테스트를 택하겠다"는 논문 전체의 방법론적 선언으로 봤다. 후속 질문 3개(중국어 방 반례, LLM 벤치마크의 편향, 의식 문제를 넘어간 것의 평가)를 제안했다.',
     verdict: '대체로 확인. "행동주의 테스트"라는 규정은 해석 문제(v1)',
     notes: ["v1"],
   },
@@ -205,7 +205,7 @@ function NoteBox({ id }: { id: string }) {
   return (
     <Callout lead={`${id} · ${note.verdict}`} tone={TONE[note.verdict]}>
       <span style={{ display: "block", color: "var(--text-secondary)", marginBottom: 4 }}>
-        Moonlight: “{note.claim}”
+        Moonlight AI 답변: “{note.claim}”
       </span>
       {note.body}
       {note.links ? (
@@ -231,7 +231,7 @@ function QABlock({ qa }: { qa: QA }) {
           { label: "내 질문", value: qa.question },
           { label: "논문 위치", value: qa.where },
           ...(qa.quote ? [{ label: "선택한 원문", value: qa.quote }] : []),
-          { label: "Moonlight 답변 요약", value: qa.answer },
+          { label: "Moonlight AI 답변 요약", value: qa.answer },
           { label: "검증", value: qa.verdict },
         ]}
       />
@@ -246,7 +246,7 @@ export default function App() {
   return (
     <Page
       title="튜링 이미테이션 게임"
-      summary="요약: (1) Turing(1950)을 Moonlight로 읽으며 물은 8개 질문을 논문 위치, 질문, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) 틀린 곳은 6개입니다: 용량 환산, 70% 검증 현황, 튜링의 용량 가정, 게재 권호, 1939년 강의 청강 여부와 주제. (3) Q7에서 나온 연구 질문 3개(1939년 강의, 검증 vs 반증, ESP 반론)는 후속 조사로 따로 정리했습니다."
+      summary="요약: (1) Turing(1950)을 Moonlight로 읽으며 물은 8개 질문을 논문 위치, 질문, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 답변에서 틀린 곳은 6개입니다: 용량 환산, 70% 검증 현황, 튜링의 용량 가정, 게재 권호, 1939년 강의 청강 여부와 주제. (3) Q7에서 나온 연구 질문 3개(1939년 강의, 검증 vs 반증, ESP 반론)는 후속 조사로 따로 정리했습니다."
       width="column"
       lang="ko"
     >
@@ -258,7 +258,7 @@ export default function App() {
           { label: "후속 조사 1: 1939년 강의", id: "wittgenstein" },
           { label: "후속 조사 2: 검증가능성 vs 반증가능성", id: "falsifiability" },
           { label: "후속 조사 3: ESP 반론의 현대적 재해석", id: "esp" },
-          { label: "검증 결과 한눈에", id: "verify" },
+          { label: "Moonlight AI 답변 검토 결과", id: "verify" },
         ]}
       />
 
@@ -274,7 +274,7 @@ export default function App() {
           ]}
         />
         <Text>
-          Q&A마다 내 질문, 논문 위치, 선택한 원문, Moonlight 답변 요약, 검증 결과를 적었다. 검증은 튜링 원문(UMBC PDF), Oxford의 게재 정보, 웹 출처와 대조했다. 문제가 있는 주장은 바로 아래 상자에 판정과 함께 적었다.
+          Q&A마다 내 질문, 논문 위치, 선택한 원문, Moonlight AI 답변 요약, 검증 결과를 적었다. 검증은 튜링 원문(UMBC PDF), Oxford의 게재 정보, 웹 출처와 대조했다. AI 답변 중 문제가 있는 문장은 바로 아래 상자에 판정과 함께 적었다.
         </Text>
         <Table
           columns={["판정", "뜻"]}
@@ -455,10 +455,10 @@ export default function App() {
         </Callout>
       </Section>
 
-      <Section heading="검증 결과 한눈에" id="verify">
+      <Section heading="Moonlight AI 답변 검토 결과" id="verify">
         <Text>틀림 6개, 부분 2개, 보충 2개, 해석 3개. 번호는 위 Q&A 상자의 번호와 같다.</Text>
         <Table
-          columns={["번호", "질문", "Moonlight 주장", "판정"]}
+          columns={["번호", "질문", "Moonlight AI 답변 내용", "판정"]}
           rows={Object.entries(NOTES).map(([id, note]) => [
             id,
             QAS.filter((qa) => qa.notes.includes(id)).map((qa) => `Q${qa.n}`).join(", "),
@@ -466,10 +466,34 @@ export default function App() {
             note.verdict === "해석" ? note.verdict : { text: note.verdict, tone: note.verdict === "틀림" ? "danger" : "warning" },
           ])}
         />
-        <Section heading="원문과 대조해 맞은 주장 (22개)">
-          <Text>
-            Gallup 여론조사와 "absurd"(§1) · 참가자 3명과 "either sex"(§1) · 머리카락 답변 인용(§1) · B의 최선 전략은 진실 말하기(§1) · 텔레프린터 사용(§1) · "sharp line between the physical and the intellectual"(§2) · 미인대회·비행기 경주 비유(§2) · "worthy one to investigate"(§2) · 저장 용량 = 상태 수의 log2(§5) · Manchester 기계 약 165,000(§5) · 범용성 논증(§5) · 예측 문장 내용(§6) · 반론 9개 목록(§6) · 괴델 반론 응답 "without any sort of proof"(§6) · "petty triumph"(§6) · 유아론과 "polite convention"(§6) · Lovelace 인용과 "Machines take me by surprise"(§6) · supercritical 비유(§6) · ESP "statistical evidence … overwhelming"과 "telepathy-proof room"(§6) · 뇌 용량 10¹⁰–10¹⁵, 맹인 상대 10⁹, 60명 50년(§7) · 아이 기계와 진화 유비 3줄(§7) · 마지막 문장(§7)
-          </Text>
+        <Section heading="원문과 대조해 맞은 AI 답변 내용 (22개)">
+          <Table
+            columns={["#", "AI 답변 내용", "원문 위치"]}
+            rows={[
+              ["1", 'Gallup 여론조사와 "absurd"', "§1"],
+              ["2", '참가자 3명과 "either sex"', "§1"],
+              ["3", "머리카락 답변 인용", "§1"],
+              ["4", "B의 최선 전략은 진실 말하기", "§1"],
+              ["5", "텔레프린터 사용", "§1"],
+              ["6", '"sharp line between the physical and the intellectual"', "§2"],
+              ["7", "미인대회·비행기 경주 비유", "§2"],
+              ["8", '"worthy one to investigate"', "§2"],
+              ["9", "저장 용량 = 상태 수의 log2", "§5"],
+              ["10", "Manchester 기계 약 165,000", "§5"],
+              ["11", "범용성 논증", "§5"],
+              ["12", "예측 문장 내용", "§6"],
+              ["13", "반론 9개 목록", "§6"],
+              ["14", '괴델 반론 응답 "without any sort of proof"', "§6"],
+              ["15", '"petty triumph"', "§6"],
+              ["16", '유아론과 "polite convention"', "§6"],
+              ["17", 'Lovelace 인용과 "Machines take me by surprise"', "§6"],
+              ["18", "supercritical 비유", "§6"],
+              ["19", 'ESP "statistical evidence … overwhelming"과 "telepathy-proof room"', "§6"],
+              ["20", "뇌 용량 10¹⁰–10¹⁵, 맹인 상대 10⁹, 60명 50년", "§7"],
+              ["21", "아이 기계와 진화 유비 3줄", "§7"],
+              ["22", "마지막 문장", "§7"],
+            ]}
+          />
         </Section>
       </Section>
     </Page>

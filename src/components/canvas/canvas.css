@@ -4,16 +4,14 @@
 .cv-page {
   --cv-main: 700px;
   --cv-toc: 220px;
-  /* 목차는 왼쪽 끝(사이트 머리 글자와 같은 선)에, 본문은 화면 가운데에 둔다 */
+  /* 목차는 화면 왼쪽 끝에, 본문은 화면 가운데에 둔다 */
   display: grid;
   grid-template-columns: minmax(var(--cv-toc), 1fr) minmax(0, var(--cv-main)) minmax(0, 1fr);
   grid-template-areas:
     "toc head ."
     "toc body .";
   column-gap: 48px;
-  max-width: 1280px;
-  margin-inline: auto;
-  padding: 40px 24px 112px;
+  padding: 40px 32px 112px;
   align-items: start;
   letter-spacing: var(--tracking-body);
 }
