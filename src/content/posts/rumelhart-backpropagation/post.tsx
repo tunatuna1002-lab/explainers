@@ -36,7 +36,7 @@ const NOTES: Record<string, Note> = {
   },
   v3: {
     verdict: "부분",
-    claim: '"104개 삼중항 중 100개로 학습했다"는 Fig. 4 설명 글에 있다',
+    claim: "104개 삼중항 중 100개로 학습했다는 내용은 Fig. 4 설명 글에 있다",
     body: '내용은 맞다. 하지만 이 문장은 Fig. 4 설명 글이 아니라 3쪽 오른쪽 단 본문에 있다("after the network was trained on 100 of the 104 possible triples"). Fig. 4 설명 글에는 "학습하지 않은 4개 삼중항"만 나온다.',
   },
   v4: {
@@ -189,7 +189,7 @@ function QABlock({ qa }: { qa: QA }) {
 export default function App() {
   return (
     <Page
-      title="역전파 논문 읽기 (Rumelhart·Hinton·Williams 1986)"
+      title="역전파 논문 읽기 (Rumelhart 외, 1986)"
       summary="요약: (1) Rumelhart·Hinton·Williams(1986) 역전파 논문을 Moonlight로 읽으며 물은 9개 질문을 논문 위치, 질문, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 답변에서 틀린 곳은 1개(논문에 없는 XOR 예제)이고, 부분 2개(가중치 감쇠의 목적, 인용 위치)와 보충 1개(기울기 합과 평균의 혼용)가 있습니다. (3) 스캔본 1쪽에 앞 논문이 함께 실려 있어, 그 문단을 역전파 논문으로 알고 물은 질문(Q3–Q6)도 그대로 남겼습니다."
       width="column"
       lang="ko"
