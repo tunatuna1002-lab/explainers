@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>베이즈 넓이 그림</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">그림 1000장을 사전분포와 우도로 나눈 넓이 그림에서 사후분포가 진한 부분의 비율로 정해지는 베이즈 정리 위젯</h2>
+<div style="display:grid;gap:8px;margin:0 0 14px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="pa" style="font-size:14px;color:var(--text-secondary);min-width:150px">사전 p(A)</label><input type="range" id="pa" min="0.05" max="0.95" step="0.05" value="0.7" style="flex:1;min-width:140px"><span id="pao" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">0.70</span></div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="la" style="font-size:14px;color:var(--text-secondary);min-width:150px">우도 p(x|A)</label><input type="range" id="la" min="0.01" max="1" step="0.01" value="0.1" style="flex:1;min-width:140px"><span id="lao" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">0.10</span></div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="lb" style="font-size:14px;color:var(--text-secondary);min-width:150px">우도 p(x|B)</label><input type="range" id="lb" min="0.01" max="1" step="0.01" value="0.4" style="flex:1;min-width:140px"><span id="lbo" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">0.40</span></div>
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+<svg id="ar" width="300" height="300" viewBox="0 0 300 300" role="img" aria-label="사전분포로 나눈 두 기둥과 우도로 칠한 진한 부분" style="flex:0 0 auto;max-width:100%"></svg>
+<div style="flex:1;min-width:220px;display:grid;gap:10px">
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">1000장 중 사진 x가 된 그림</div><div id="cnt" style="font-size:15px;line-height:1.7">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">분모 p(x)</div><div id="px" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">사후 p(A|x) / p(B|x)</div><div id="po" style="font-size:22px;font-weight:500">-</div></div>
+</div>
+</div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:10px 0 0">
+<span><span style="display:inline-block;width:10px;height:10px;background:#534AB7;margin-right:6px"></span>A에서 사진 x가 됨</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#CECBF6;margin-right:6px"></span>A에서 다른 사진이 됨</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#0F6E56;margin-right:6px"></span>B에서 사진 x가 됨</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#9FE1CB;margin-right:6px"></span>B에서 다른 사진이 됨</span>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0 0">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">-</div>
+</div>
+<script>
+(function(){
+var pa=document.getElementById('pa'),la=document.getElementById('la'),lb=document.getElementById('lb'),ar=document.getElementById('ar');
+function draw(){
+var a=+pa.value,b=1-a,xa=+la.value,xb=+lb.value,S=280,o=10,wA=a*S,ja=a*xa,jb=b*xb,px=ja+jb,qa=ja/px,qb=jb/px,h='';
+document.getElementById('pao').textContent=a.toFixed(2);document.getElementById('lao').textContent=xa.toFixed(2);document.getElementById('lbo').textContent=xb.toFixed(2);
+h+='<rect x="'+o+'" y="'+o+'" width="'+wA.toFixed(1)+'" height="'+S+'" fill="#CECBF6"/>';
+h+='<rect x="'+o+'" y="'+(o+S-xa*S).toFixed(1)+'" width="'+wA.toFixed(1)+'" height="'+(xa*S).toFixed(1)+'" fill="#534AB7"/>';
+h+='<rect x="'+(o+wA).toFixed(1)+'" y="'+o+'" width="'+(S-wA).toFixed(1)+'" height="'+S+'" fill="#9FE1CB"/>';
+h+='<rect x="'+(o+wA).toFixed(1)+'" y="'+(o+S-xb*S).toFixed(1)+'" width="'+(S-wA).toFixed(1)+'" height="'+(xb*S).toFixed(1)+'" fill="#0F6E56"/>';
+h+='<line x1="'+(o+wA).toFixed(1)+'" y1="'+o+'" x2="'+(o+wA).toFixed(1)+'" y2="'+(o+S)+'" stroke="var(--surface-2)" stroke-width="2"/>';
+if(wA>30)h+='<text x="'+(o+wA/2).toFixed(1)+'" y="'+(o+18)+'" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#3C3489">A</text>';
+if(S-wA>30)h+='<text x="'+(o+wA+(S-wA)/2).toFixed(1)+'" y="'+(o+18)+'" text-anchor="middle" style="font-size:13px;font-weight:500;fill:#085041">B</text>';
+h+='<rect x="'+o+'" y="'+o+'" width="'+S+'" height="'+S+'" fill="none" stroke="var(--border-strong)" stroke-width="0.5"/>';
+ar.innerHTML=h;
+var nA=1000*a,nB=1000*b,cA=nA*xa,cB=nB*xb;
+document.getElementById('cnt').innerHTML='A: '+nA.toFixed(0)+'장 × '+xa.toFixed(2)+' = '+cA.toFixed(1)+'장<br>B: '+nB.toFixed(0)+'장 × '+xb.toFixed(2)+' = '+cB.toFixed(1)+'장<br>합: '+(cA+cB).toFixed(1)+'장';
+document.getElementById('px').textContent=px.toFixed(3);
+document.getElementById('po').textContent=qa.toFixed(3)+' / '+qb.toFixed(3);
+var d=qa-a,t;
+if(Math.abs(d)<0.02)t='사진 x를 봐도 A의 확률이 '+Math.round(a*100)+'%에서 거의 바뀌지 않습니다. 두 스케치가 사진 x를 비슷하게 잘 만들기 때문입니다.';
+else if(d<0)t='사진 x를 보고 A의 확률이 '+Math.round(a*100)+'%에서 '+Math.round(qa*100)+'%로 내려갔습니다. B 쪽이 사진 x를 더 잘 만들기 때문입니다.';
+else t='사진 x를 보고 A의 확률이 '+Math.round(a*100)+'%에서 '+Math.round(qa*100)+'%로 올라갔습니다. A 쪽이 사진 x를 더 잘 만들기 때문입니다.';
+document.getElementById('nw').textContent=t}
+[pa,la,lb].forEach(function(e){e.addEventListener('input',draw)});draw();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>

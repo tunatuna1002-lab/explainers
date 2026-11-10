@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>잡음 차원과 거리</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">신호 차원 2개에 잡음 차원을 더할수록 같은 무리와 다른 무리까지의 거리가 겹쳐지고 최근접 이웃 정답률이 떨어지는 모습</h2>
+<div style="display:flex;align-items:center;gap:12px;margin:0 0 6px;flex-wrap:wrap">
+<label for="dd" style="font-size:14px;color:var(--text-secondary)">전체 차원 (신호 2 + 잡음)</label>
+<input type="range" id="dd" min="0" max="8" step="1" value="0" style="flex:1;min-width:140px">
+<span id="ddo" style="font-size:14px;font-weight:500;min-width:36px;text-align:right">2</span>
+</div>
+<p style="font-size:13px;color:var(--text-secondary);margin:0 0 12px">점 120개, 두 무리 각 60개 (예시 값). 기준점 하나에서 다른 모든 점까지의 거리를 셉니다.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:0 0 12px">
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">최근접 이웃이 같은 무리일 비율</div><div id="ma" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">가장 먼 거리 ÷ 가장 가까운 거리</div><div id="mr" style="font-size:22px;font-weight:500">-</div></div>
+</div>
+<svg id="hg" width="100%" viewBox="0 0 680 240" role="img" aria-label="기준점에서 같은 무리와 다른 무리까지의 거리 분포 막대그래프"></svg>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:4px 0 0">
+<span><span style="display:inline-block;width:10px;height:10px;background:#1D9E75;margin-right:6px"></span>같은 무리까지 거리</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#D85A30;margin-right:6px"></span>다른 무리까지 거리</span>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0 0">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">-</div>
+</div>
+<script>
+(function(){
+var DIMS=[2,3,5,10,20,50,100,200,500],N=120,NB=24,L=50,R=650,T=20,B=190;
+function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function nrm(r){var u=Math.max(r(),1e-9),v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)}
+var sl=document.getElementById('dd'),hg=document.getElementById('hg');
+function gen(d){var r=rng(5),P=[],lab=[],i,j;for(i=0;i<N;i++){var c=i<N/2?0:1,cen=c?0.7:0.3,v=[cen+0.08*nrm(r),cen+0.08*nrm(r)];for(j=2;j<d;j++)v.push(r());P.push(v);lab.push(c)}return{P:P,lab:lab}}
+function dist(a,b){var s=0;for(var k=0;k<a.length;k++){var t=a[k]-b[k];s+=t*t}return Math.sqrt(s)}
+function draw(){
+var d=DIMS[+sl.value],g=gen(d),P=g.P,lab=g.lab,i,j,ok=0;
+document.getElementById('ddo').textContent=d;
+var D=[];for(i=0;i<N;i++){D.push(new Float64Array(N))}
+for(i=0;i<N;i++)for(j=i+1;j<N;j++){var v=dist(P[i],P[j]);D[i][j]=v;D[j][i]=v}
+for(i=0;i<N;i++){var bj=-1,bv=1e9;for(j=0;j<N;j++){if(j!==i&&D[i][j]<bv){bv=D[i][j];bj=j}}if(lab[bj]===lab[i])ok++}
+var q=0,mn=1e9,mx=0;for(j=1;j<N;j++){mn=Math.min(mn,D[q][j]);mx=Math.max(mx,D[q][j])}
+var same=new Array(NB).fill(0),oth=new Array(NB).fill(0);
+for(j=1;j<N;j++){var b=Math.min(NB-1,Math.floor(D[q][j]/mx*NB));if(lab[j]===lab[q])same[b]++;else oth[b]++}
+var top=0;for(i=0;i<NB;i++)top=Math.max(top,same[i]+oth[i]);
+var h='<line x1="'+L+'" y1="'+B+'" x2="'+R+'" y2="'+B+'" stroke="var(--border-strong)" stroke-width="0.5"/>',bw=(R-L)/NB;
+for(i=0;i<NB;i++){var hs=same[i]/top*(B-T),ho=oth[i]/top*(B-T),x=L+i*bw+1;
+if(hs>0)h+='<rect x="'+x.toFixed(1)+'" y="'+(B-hs).toFixed(1)+'" width="'+(bw-2).toFixed(1)+'" height="'+hs.toFixed(1)+'" fill="#1D9E75"/>';
+if(ho>0)h+='<rect x="'+x.toFixed(1)+'" y="'+(B-hs-ho).toFixed(1)+'" width="'+(bw-2).toFixed(1)+'" height="'+ho.toFixed(1)+'" fill="#D85A30"/>'}
+['0','0.5','1'].forEach(function(s,k){h+='<text x="'+(L+k*(R-L)/2)+'" y="'+(B+18)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">'+s+'</text>'});
+h+='<text x="'+((L+R)/2)+'" y="'+(B+38)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">기준점에서의 거리 (가장 먼 거리 = 1)</text>';
+hg.innerHTML=h;
+var acc=ok/N,ratio=mx/mn;
+document.getElementById('ma').textContent=Math.round(acc*100)+'%';
+document.getElementById('mr').textContent=ratio<100?ratio.toFixed(2)+'배':Math.round(ratio)+'배';
+var t;
+if(d<=3)t='잡음이 거의 없어서 초록(같은 무리)은 가깝고 주황(다른 무리)은 멉니다. 거리만 보고도 무리를 가를 수 있습니다.';
+else if(d<=20)t='잡음 차원이 '+(d-2)+'개 섞이면서 초록과 주황이 가까워집니다. 아직은 무리를 꽤 구별합니다.';
+else t='잡음 차원이 '+(d-2)+'개라서 모든 거리가 비슷해졌습니다. 신호 2개 차원은 그대로 있지만 거리 계산에서 묻혀 버렸습니다.';
+document.getElementById('nw').textContent=t}
+sl.addEventListener('input',draw);draw();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>

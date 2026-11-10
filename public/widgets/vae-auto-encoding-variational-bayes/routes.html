@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>같은 칸 두 길</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">그림 100장을 스케치 기준으로 먼저 나누거나 사진 기준으로 먼저 나눠도 A이면서 x인 그림 7장은 같은 점들임을 보여 주는 위젯</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+<button id="m0">섞인 상태</button><button id="m1">① 스케치로 먼저 나누기</button><button id="m2">② 사진으로 먼저 나누기</button>
+</div>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin:0 0 8px;cursor:pointer"><input type="checkbox" id="tk" checked> A이면서 사진 x인 그림에 주황 고리 표시</label>
+<svg id="sv" width="100%" viewBox="0 0 680 320" role="img" aria-label="그림 100장을 나타내는 점들"></svg>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:6px 0 12px">
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#534AB7;margin-right:6px"></span>A, 사진 x</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#7F77DD;opacity:.35;margin-right:6px"></span>A, 다른 사진</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#0F6E56;margin-right:6px"></span>B, 사진 x</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1D9E75;opacity:.35;margin-right:6px"></span>B, 다른 사진</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid #D85A30;margin-right:6px"></span>추적하는 7장</span>
+</div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px;margin:0 0 12px"><div style="font-size:13px;color:var(--text-secondary)">세는 길</div><div id="ct" style="font-size:15px;line-height:1.7">-</div></div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">-</div>
+</div>
+<script>
+(function(){
+var sv=document.getElementById('sv'),NS='http://www.w3.org/2000/svg',SP=26,mode=0,D=[],i;
+for(i=0;i<100;i++){var a=i<70,x=a?i<7:(i>=70&&i<82);D.push({a:a,x:x})}
+var r=12345;function rn(){r=(r*1103515245+12345)%2147483648;return r/2147483648}
+var perm=D.map(function(_,k){return k});for(i=99;i>0;i--){var j=Math.floor(rn()*(i+1)),t=perm[i];perm[i]=perm[j];perm[j]=t}
+var boxG=document.createElementNS(NS,'g');sv.appendChild(boxG);
+var dots=D.map(function(d){var c=document.createElementNS(NS,'circle');c.setAttribute('r','8');c.setAttribute('cx','0');c.setAttribute('cy','0');
+c.setAttribute('fill',d.a?(d.x?'#534AB7':'#7F77DD'):(d.x?'#0F6E56':'#1D9E75'));c.setAttribute('fill-opacity',d.x?'1':'0.35');
+c.style.transition='transform .8s ease';sv.appendChild(c);return c});
+function grid(list,x0,y0,cols){var out={};list.forEach(function(k,n){out[k]=[x0+(n%cols)*SP,y0+Math.floor(n/cols)*SP]});return out}
+function idx(f){var o=[];for(var k=0;k<100;k++)if(f(D[k]))o.push(k);return o}
+function box(x,y,w,h,lab){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="10" fill="none" stroke="var(--border-strong)" stroke-width="0.5" stroke-dasharray="4 4"/><text x="'+(x+12)+'" y="'+(y-10)+'" style="font-size:13px;font-weight:500;fill:var(--text-primary)">'+lab+'</text>'}
+function draw(){
+var pos={},bx='';
+if(mode===0){perm.forEach(function(k,n){pos[k]=[223+(n%10)*SP,56+Math.floor(n/10)*SP]})}
+else if(mode===1){var A=idx(function(d){return d.a}).sort(function(p,q){return D[q].x-D[p].x}),B=idx(function(d){return !d.a}).sort(function(p,q){return D[q].x-D[p].x});
+Object.assign(pos,grid(A,62,92,14),grid(B,486,92,6));bx=box(44,72,382,146,'스케치 A (70장)')+box(468,72,168,146,'스케치 B (30장)')}
+else{var X=idx(function(d){return d.x}).sort(function(p,q){return D[q].a-D[p].a}),N=idx(function(d){return !d.x}).sort(function(p,q){return D[q].a-D[p].a});
+Object.assign(pos,grid(X,62,92,6),grid(N,272,92,14));bx=box(44,72,168,120,'사진 x (19장)')+box(254,72,382,172,'다른 사진 (81장)')}
+boxG.innerHTML=bx;
+var tk=document.getElementById('tk').checked;
+dots.forEach(function(c,k){var p=pos[k];c.style.transform='translate('+p[0]+'px,'+p[1]+'px)';var tr=tk&&D[k].a&&D[k].x;c.setAttribute('stroke',tr?'#D85A30':'none');c.setAttribute('stroke-width',tr?'3':'0')});
+['m0','m1','m2'].forEach(function(id,k){var b=document.getElementById(id),on=k===mode;b.style.background=on?'var(--bg-accent)':'';b.style.color=on?'var(--text-accent)':'';b.setAttribute('aria-pressed',on)});
+var ct,nw;
+if(mode===0){ct='아직 나누지 않았습니다. 그림 100장에 꼬리표 두 개(스케치, 사진)가 붙어 있을 뿐입니다.';nw='주황 고리 7장은 이미 정해져 있습니다. 어떻게 나누든 이 7장이 바로 "A이면서 x"인 그림입니다.'}
+else if(mode===1){ct='스케치 A 무리 70장 → 그중 사진 x의 비율 7 / 70 = 0.1<br>70 × 0.1 = <b>7장</b> &nbsp;(p(z) × p(x|z))';nw='스케치 꼬리표로 먼저 나눴습니다. 주황 고리 7장은 A 무리 맨 앞에 모여 있습니다.'}
+else{ct='사진 x 무리 19장 → 그중 스케치 A의 비율 7 / 19 ≈ 0.368<br>19 × 0.368 ≈ <b>7장</b> &nbsp;(p(x) × p(z|x))';nw='사진 꼬리표로 먼저 나눴습니다. 주황 고리 7장은 그대로 같은 7장이고, 이번에는 사진 x 무리 맨 앞에 모였습니다.'}
+document.getElementById('ct').innerHTML=ct;document.getElementById('nw').textContent=nw}
+document.getElementById('m0').onclick=function(){mode=0;draw()};
+document.getElementById('m1').onclick=function(){mode=1;draw()};
+document.getElementById('m2').onclick=function(){mode=2;draw()};
+document.getElementById('tk').onchange=draw;
+draw();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>

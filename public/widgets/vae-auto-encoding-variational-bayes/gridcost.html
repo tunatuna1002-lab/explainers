@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>격자 적분 비용</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">잠재 차원과 차원당 격자점 수를 바꾸면 수치 적분에 필요한 격자점 수와 계산 시간이 지수적으로 커지는 모습</h2>
+<div style="display:flex;align-items:center;gap:12px;margin:0 0 8px;flex-wrap:wrap">
+<label for="dd" style="font-size:14px;color:var(--text-secondary);min-width:96px">잠재 차원 d</label>
+<input type="range" id="dd" min="1" max="20" step="1" value="10" style="flex:1;min-width:140px">
+<span id="ddo" style="font-size:14px;font-weight:500;min-width:28px;text-align:right">10</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;margin:0 0 14px;flex-wrap:wrap">
+<label for="kk" style="font-size:14px;color:var(--text-secondary);min-width:96px">차원당 점 수 k</label>
+<input type="range" id="kk" min="2" max="20" step="1" value="10" style="flex:1;min-width:140px">
+<span id="kko" style="font-size:14px;font-weight:500;min-width:28px;text-align:right">10</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:0 0 12px">
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">필요한 격자점 수 (k^d)</div><div id="mg" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">계산 시간 (초당 10억 회, 예시 값)</div><div id="mt" style="font-size:22px;font-weight:500">-</div></div>
+</div>
+<svg id="ch" width="100%" viewBox="0 0 680 250" role="img" aria-label="차원별 격자점 수 막대그래프, 로그 눈금"></svg>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:4px 0 0">
+<span><span style="display:inline-block;width:10px;height:10px;background:#AFA9EC;margin-right:6px"></span>차원별 격자점 수</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#D85A30;margin-right:6px"></span>지금 고른 차원</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#1D9E75;margin-right:6px"></span>논문 그림 2의 잠재 차원</span>
+<span><span style="display:inline-block;width:14px;height:0;border-top:1.5px dashed var(--text-secondary);margin:0 6px 4px 0"></span>1초에 계산 가능한 양</span>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0 0">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">-</div>
+</div>
+<script>
+(function(){
+var dd=document.getElementById('dd'),kk=document.getElementById('kk'),ch=document.getElementById('ch');
+var L=60,R=650,T=20,B=200,MX=26,YR=31557600,PAPER=[3,5,10,20];
+function big(lg){if(lg<6)return Math.round(Math.pow(10,lg)).toLocaleString();var e=Math.floor(lg+1e-9),m=Math.pow(10,lg-e);return m.toFixed(1)+' × 10<sup>'+e+'</sup>'}
+function tm(lg){var s=Math.pow(10,lg);if(s<1)return '1초 미만';if(s<60)return Math.round(s)+'초';if(s<3600)return Math.round(s/60)+'분';if(s<86400)return Math.round(s/3600)+'시간';if(s<YR)return Math.round(s/86400)+'일';var yl=lg-Math.log10(YR);if(yl<6)return Math.round(Math.pow(10,yl)).toLocaleString()+'년';return big(yl)+'년'}
+function y(v){return B-(v/MX)*(B-T)}
+function draw(){
+var d=+dd.value,k=+kk.value,lk=Math.log10(k),lg=d*lk,h='',i;
+document.getElementById('ddo').textContent=d;document.getElementById('kko').textContent=k;
+for(i=0;i<=25;i+=5){h+='<line x1="'+L+'" y1="'+y(i)+'" x2="'+R+'" y2="'+y(i)+'" stroke="var(--border)" stroke-width="0.5"/><text x="'+(L-8)+'" y="'+(y(i)+4)+'" text-anchor="end" style="font-size:12px;fill:var(--text-secondary)">10^'+i+'</text>'}
+var bw=(R-L)/20;
+for(i=1;i<=20;i++){var v=i*lk,x=L+(i-1)*bw+3,w=bw-6,c=i===d?'#D85A30':'#AFA9EC';
+h+='<rect x="'+x.toFixed(1)+'" y="'+y(Math.min(v,MX)).toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+(B-y(Math.min(v,MX))).toFixed(1)+'" fill="'+c+'" rx="2"/>';
+h+='<text x="'+(x+w/2).toFixed(1)+'" y="'+(B+16)+'" text-anchor="middle" style="font-size:11px;fill:var(--text-secondary)">'+i+'</text>';
+if(PAPER.indexOf(i)>=0)h+='<rect x="'+(x+w/2-5).toFixed(1)+'" y="'+(B+22)+'" width="10" height="6" rx="2" fill="#1D9E75"/>'}
+h+='<line x1="'+L+'" y1="'+y(9)+'" x2="'+R+'" y2="'+y(9)+'" stroke="var(--text-secondary)" stroke-width="1.2" stroke-dasharray="5 4"/>';
+h+='<text x="'+(L+(R-L)/2)+'" y="'+(B+44)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">잠재 차원 d (세로축은 로그 눈금)</text>';
+ch.innerHTML=h;
+document.getElementById('mg').innerHTML=big(lg);
+document.getElementById('mt').innerHTML=tm(lg-9);
+var s=Math.pow(10,lg-9),t;
+if(s<1)t=d+'차원에서는 격자점이 적어서 1초 안에 적분이 끝납니다. 저차원 적분은 쉽습니다.';
+else if(s<YR)t=d+'차원에서는 오래 걸리지만 아직 가능한 수준입니다. 그래도 데이터마다, 갱신마다 반복하면 감당하기 어렵습니다.';
+else t=d+'차원에서는 한 번 계산하는 데 수년 이상 걸립니다. 차원이 하나 늘 때마다 시간이 '+k+'배가 됩니다.';
+document.getElementById('nw').textContent=t}
+dd.addEventListener('input',draw);kk.addEventListener('input',draw);draw();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>

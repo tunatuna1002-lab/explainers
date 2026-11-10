@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>기존 방법과 AEVB 비교</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<div class="card"><svg width="100%" viewBox="0 0 680 590" role="img"><title>기존 샘플링 방법과 AEVB 방법 비교</title><desc>왼쪽은 사진마다 샘플링을 여러 걸음 반복해 스케치 후보를 얻는 기존 방법이고, 오른쪽은 인식 모델이 평균과 흩어짐을 한 번에 내고 밖에서 주사위를 넣어 스케치 후보를 계산한 뒤 디코더와 함께 갱신하는 이 논문의 방법이다.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="40" y="30" width="220" height="414" rx="12" fill="none" stroke="var(--border-strong)" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text class="th" x="150" y="54" text-anchor="middle" dominant-baseline="central">기존: 사진마다 긴 샘플링</text>
+<text class="ts" x="150" y="74" text-anchor="middle" dominant-baseline="central">예: 몬테카를로 EM (부록 E)</text>
+<rect x="290" y="30" width="350" height="510" rx="12" fill="none" stroke="var(--border-strong)" stroke-width="0.5" stroke-dasharray="4 4"/>
+<text class="th" x="465" y="54" text-anchor="middle" dominant-baseline="central">이 논문: 한 번에 분포 출력</text>
+<text class="ts" x="465" y="74" text-anchor="middle" dominant-baseline="central">AEVB (알고리즘 1)</text>
+<g class="node">
+<rect class="box" x="60" y="92" width="180" height="44" rx="8" stroke-width="0.5"/>
+<text class="th" x="150" y="114" text-anchor="middle" dominant-baseline="central">사진 x 한 장</text>
+</g>
+<line x1="150" y1="136" x2="150" y2="170" class="arr" marker-end="url(#arrow)"/>
+<g class="node c-coral">
+<rect x="60" y="176" width="180" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="150" y="194" text-anchor="middle" dominant-baseline="central">샘플링 반복</text>
+<text class="ts" x="150" y="214" text-anchor="middle" dominant-baseline="central">↻ 사진마다 여러 걸음</text>
+</g>
+<line x1="150" y1="232" x2="150" y2="266" class="arr" marker-end="url(#arrow)"/>
+<g class="node">
+<rect class="box" x="60" y="272" width="180" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="150" y="290" text-anchor="middle" dominant-baseline="central">스케치 후보 z</text>
+<text class="ts" x="150" y="310" text-anchor="middle" dominant-baseline="central">잠재 변수 샘플</text>
+</g>
+<line x1="150" y1="328" x2="150" y2="362" class="arr" marker-end="url(#arrow)"/>
+<g class="node">
+<rect class="box" x="60" y="368" width="180" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="150" y="386" text-anchor="middle" dominant-baseline="central">생성 모델 갱신</text>
+<text class="ts" x="150" y="406" text-anchor="middle" dominant-baseline="central">인코더 없음</text>
+</g>
+<g class="node">
+<rect class="box" x="304" y="92" width="200" height="44" rx="8" stroke-width="0.5"/>
+<text class="th" x="404" y="114" text-anchor="middle" dominant-baseline="central">사진 x 한 장</text>
+</g>
+<line x1="404" y1="136" x2="404" y2="170" class="arr" marker-end="url(#arrow)"/>
+<g class="node c-purple">
+<rect x="304" y="176" width="200" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="404" y="194" text-anchor="middle" dominant-baseline="central">인식 모델 (인코더)</text>
+<text class="ts" x="404" y="214" text-anchor="middle" dominant-baseline="central">평균, 흩어짐 한 번에</text>
+</g>
+<line x1="404" y1="232" x2="404" y2="266" class="arr" marker-end="url(#arrow)"/>
+<g class="node c-purple">
+<rect x="304" y="272" width="200" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="404" y="290" text-anchor="middle" dominant-baseline="central">평균 + 흩어짐 × 주사위</text>
+<text class="ts" x="404" y="310" text-anchor="middle" dominant-baseline="central">스케치 후보 z</text>
+</g>
+<g class="node c-purple">
+<rect x="540" y="272" width="90" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="585" y="290" text-anchor="middle" dominant-baseline="central">표준 주사위</text>
+<text class="ts" x="585" y="310" text-anchor="middle" dominant-baseline="central">밖에서 넣음</text>
+</g>
+<line x1="540" y1="300" x2="510" y2="300" class="arr" marker-end="url(#arrow)"/>
+<line x1="404" y1="328" x2="404" y2="362" class="arr" marker-end="url(#arrow)"/>
+<g class="node">
+<rect class="box" x="304" y="368" width="200" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="404" y="386" text-anchor="middle" dominant-baseline="central">디코더</text>
+<text class="ts" x="404" y="406" text-anchor="middle" dominant-baseline="central">사진 다시 그리기</text>
+</g>
+<line x1="404" y1="424" x2="404" y2="458" class="arr" marker-end="url(#arrow)"/>
+<g class="node">
+<rect class="box" x="304" y="464" width="200" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="404" y="482" text-anchor="middle" dominant-baseline="central">하한 계산 후 함께 갱신</text>
+<text class="ts" x="404" y="502" text-anchor="middle" dominant-baseline="central">보통 경사법 사용</text>
+</g>
+<rect class="c-coral" x="40" y="556" width="12" height="12" rx="2" stroke-width="0.5"/>
+<text class="ts" x="58" y="562" dominant-baseline="central">오래 걸리는 부분</text>
+<rect class="c-purple" x="190" y="556" width="12" height="12" rx="2" stroke-width="0.5"/>
+<text class="ts" x="208" y="562" dominant-baseline="central">이 논문이 바꾼 부분</text>
+</svg></div>
+<script src="shim.js"></script>
+</body>
+</html>

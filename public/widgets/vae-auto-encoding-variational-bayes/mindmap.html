@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AEVB 학습 노트 마인드맵</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">Auto-Encoding Variational Bayes 학습 노트 전체를 여덟 가지로 정리한 가로 마인드맵</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+<button id="ea">모두 펼치기</button><button id="ca">모두 접기</button><button id="zi" aria-label="확대">확대</button><button id="zo" aria-label="축소">축소</button><button id="dl">다운로드</button>
+</div>
+<div id="wr" style="overflow-x:auto"><svg id="mm" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AEVB 학습 노트 마인드맵" style="width:100%;display:block"></svg></div>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:8px 0 0">
+<span><span style="display:inline-block;width:14px;height:10px;border-radius:5px;background:#E6F1FB;border:1px solid #185FA5;margin-right:6px"></span>하위 가지 있음 (클릭하면 접기·펼치기)</span>
+<span><span style="display:inline-block;width:14px;height:10px;border-radius:5px;background:#EAF3DE;border:1px solid #3B6D11;margin-right:6px"></span>말단</span>
+</div>
+<script>
+(function(){
+var D={t:'AEVB 학습 노트',c:[
+{t:'1. 핵심·재매개변수화',c:[{t:'인코더·디코더'},{t:'평균+흩어짐×주사위'},{t:'하한 L을 학습'}]},
+{t:'2. 기존 vs AEVB',c:[{t:'온라인 알고리즘'},{t:'사진마다 MCMC'},{t:'분할 상환 추론'},{t:'연속 잠재 변수용'}]},
+{t:'3. MCMC 원리',c:[{t:'비율로 수락'},{t:'예열·자기상관'},{t:'최적화와 목적 다름'}]},
+{t:'4. 주변우도',c:[{t:'모든 스케치 평균'},{t:'닫힌 식 없음'},{t:'샘플이 빗나감'},{t:'비선형 디코더'}]},
+{t:'5. 차원의 저주',c:[{t:'계산량 폭발'},{t:'데이터 희소성'},{t:'거리 집중'},{t:'정보는 남음'}]},
+{t:'6. 베이즈 정리',c:[{t:'같은 칸 두 길'},{t:'|는 ~중에서'},{t:'분모 p(x)가 막힘'}]},
+{t:'7. 상승 vs 하강',c:[{t:'목표로 선택'},{t:'−f로 서로 변환'},{t:'상한은 폭주만 막음'}]},
+{t:'8. 하한 L 연결',c:[{t:'L ≤ log p(x)'},{t:'MNIST L ≤ 0'},{t:'그림 2·3 읽기'},{t:'다음: 식 3'}]}]};
+var svg=document.getElementById('mm'),z=1,NS='http://www.w3.org/2000/svg',H=30,GAP=40,COL=210;
+function w(n){return n.t.length*13+30}
+function setAll(n,v){if(n.c){n.x=v;n.c.forEach(function(k){setAll(k,v)})}}
+function lay(n,d,st){n.d=d;var kids=(n.c&&!n.x)?n.c:[];if(!kids.length){n.y=st.y;st.y+=GAP}else{kids.forEach(function(k){lay(k,d+1,st)});n.y=(kids[0].y+kids[kids.length-1].y)/2}}
+function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e}
+function draw(){
+var st={y:30};lay(D,0,st);svg.innerHTML='';var maxX=0,eg=el('g',{}),ng=el('g',{});svg.appendChild(eg);svg.appendChild(ng);
+(function go(n){var x=20+n.d*COL,hasC=!!n.c,f=hasC?'#E6F1FB':'#EAF3DE',s=hasC?'#185FA5':'#3B6D11',tc=hasC?'#0C447C':'#27500A',nw=w(n);
+maxX=Math.max(maxX,x+nw);
+var g=el('g',{style:hasC?'cursor:pointer':''});
+g.appendChild(el('rect',{x:x,y:n.y-H/2,width:nw,height:H,rx:H/2,fill:f,stroke:s,'stroke-width':1}));
+var tx=el('text',{x:x+nw/2,y:n.y,'text-anchor':'middle','dominant-baseline':'central','font-size':13,fill:tc,'font-family':'-apple-system, Pretendard, sans-serif'});tx.textContent=n.t+(hasC&&n.x?'  +':'');g.appendChild(tx);
+if(hasC)g.addEventListener('click',function(){n.x=!n.x;draw()});
+ng.appendChild(g);
+if(n.c&&!n.x)n.c.forEach(function(k){var cx=20+k.d*COL,sx=x+nw,cs=k.c?'#185FA5':'#3B6D11';
+eg.appendChild(el('path',{d:'M'+sx+' '+n.y+' C'+(sx+45)+' '+n.y+' '+(cx-45)+' '+k.y+' '+cx+' '+k.y,fill:'none',stroke:cs,'stroke-width':1.5,opacity:0.7}));go(k)})})(D);
+var W=Math.max(maxX+20,680),Ht=st.y;svg.setAttribute('viewBox','0 0 '+W+' '+Ht);svg.style.width=(z*100)+'%'}
+document.getElementById('ea').onclick=function(){setAll(D,false);draw()};
+document.getElementById('ca').onclick=function(){setAll(D,true);D.x=false;draw()};
+document.getElementById('zi').onclick=function(){z=Math.min(1.8,z+0.2);draw()};
+document.getElementById('zo').onclick=function(){z=Math.max(0.6,z-0.2);draw()};
+document.getElementById('dl').onclick=function(){try{var s=new XMLSerializer().serializeToString(svg),b=new Blob([s],{type:'image/svg+xml'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='aevb_study_notes_mindmap.svg';document.body.appendChild(a);a.click();a.remove()}catch(e){}};
+draw();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>경사상승과 경사하강</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">점수 f를 경사상승법으로 올라가는 것과 손실 -f를 경사하강법으로 내려가는 것이 같은 x 경로를 만들고, 상수를 더해도 경로가 바뀌지 않음을 보여 주는 위젯</h2>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+<button id="ma">점수 f 올라가기 (경사상승)</button><button id="md">손실 −f 내려가기 (경사하강)</button>
+</div>
+<div style="display:grid;gap:8px;margin:0 0 12px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="x0" style="font-size:14px;color:var(--text-secondary);min-width:110px">출발점 x</label><input type="range" id="x0" min="-3.5" max="3.5" step="0.1" value="-0.6" style="flex:1;min-width:140px"><span id="x0o" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">-0.6</span></div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="cc" style="font-size:14px;color:var(--text-secondary);min-width:110px">상수 더하기 c</label><input type="range" id="cc" min="-5" max="5" step="0.5" value="0" style="flex:1;min-width:140px"><span id="cco" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">0</span></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:0 0 12px">
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">지금 x</div><div id="vx" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">지금 값</div><div id="vy" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">기울기</div><div id="vg" style="font-size:22px;font-weight:500">-</div></div>
+</div>
+<svg id="pl" width="100%" viewBox="0 0 680 250" role="img" aria-label="목표 함수 그래프와 공의 위치"></svg>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:4px 0 10px">
+<span><span style="display:inline-block;width:14px;height:2px;background:#378ADD;margin:0 6px 4px 0"></span>점수 f + c (올라갈 대상)</span>
+<span><span style="display:inline-block;width:14px;height:2px;background:#D85A30;margin:0 6px 4px 0"></span>손실 −(f + c) (내려갈 대상)</span>
+<span><span style="display:inline-block;width:14px;height:0;border-top:1px dashed var(--text-secondary);margin:0 6px 4px 0"></span>값 0</span>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px">
+<button id="b1">한 걸음</button><button id="b20">20걸음</button><button id="br">처음부터</button>
+</div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px;font-size:13px;line-height:1.8">
+<div><span style="color:var(--text-secondary)">상승으로 간 x 기록:</span> <span id="ta" style="font-family:var(--font-mono)">-</span></div>
+<div><span style="color:var(--text-secondary)">하강으로 간 x 기록:</span> <span id="td" style="font-family:var(--font-mono)">-</span></div>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0 0">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">-</div>
+</div>
+<script>
+(function(){
+var X0=-4,X1=4,PL=50,PR=650,T=20,B=220,ETA=0.3,mode='a',x,tr={a:[],d:[]};
+function f(v){return 3*Math.exp(-Math.pow(v-1,2)/2)+1.5*Math.exp(-Math.pow(v+2,2)/0.8)}
+function df(v){return 3*Math.exp(-Math.pow(v-1,2)/2)*(-(v-1))+1.5*Math.exp(-Math.pow(v+2,2)/0.8)*(-(v+2)/0.4)}
+var x0=document.getElementById('x0'),cc=document.getElementById('cc'),pl=document.getElementById('pl');
+function obj(v){var c=+cc.value,s=f(v)+c;return mode==='a'?s:-s}
+function grad(v){return mode==='a'?df(v):-df(v)}
+function reset(){x=+x0.value;tr[mode]=[x];draw()}
+function step(){var g=grad(x);x=mode==='a'?x+ETA*g:x-ETA*g;tr[mode].push(x)}
+function sx(v){return PL+(v-X0)/(X1-X0)*(PR-PL)}
+function draw(){
+var c=+cc.value,lo,hi;
+if(mode==='a'){lo=Math.min(0,c)-0.5;hi=Math.max(0,3.1+c)+0.5}else{lo=Math.min(0,-(3.1+c))-0.5;hi=Math.max(0,-c)+0.5}
+function sy(v){return B-(v-lo)/(hi-lo)*(B-T)}
+var h='<line x1="'+PL+'" y1="'+B+'" x2="'+PR+'" y2="'+B+'" stroke="var(--border-strong)" stroke-width="0.5"/>';
+if(0>lo&&0<hi)h+='<line x1="'+PL+'" y1="'+sy(0).toFixed(1)+'" x2="'+PR+'" y2="'+sy(0).toFixed(1)+'" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="4 4"/><text x="'+(PL-8)+'" y="'+(sy(0)+4).toFixed(1)+'" text-anchor="end" style="font-size:12px;fill:var(--text-secondary)">0</text>';
+for(var k=-4;k<=4;k+=2)h+='<text x="'+sx(k)+'" y="'+(B+16)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">'+k+'</text>';
+var pts=[];for(var i=0;i<=200;i++){var v=X0+(X1-X0)*i/200;pts.push(sx(v).toFixed(1)+','+sy(obj(v)).toFixed(1))}
+h+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+(mode==='a'?'#378ADD':'#D85A30')+'" stroke-width="2"/>';
+var path=tr[mode];for(i=0;i<path.length-1;i++)h+='<circle cx="'+sx(path[i]).toFixed(1)+'" cy="'+sy(obj(path[i])).toFixed(1)+'" r="3" fill="var(--text-secondary)" opacity="0.5"/>';
+h+='<circle cx="'+sx(x).toFixed(1)+'" cy="'+sy(obj(x)).toFixed(1)+'" r="8" fill="var(--text-primary)"/>';
+pl.innerHTML=h;
+document.getElementById('x0o').textContent=(+x0.value).toFixed(1);document.getElementById('cco').textContent=c;
+document.getElementById('vx').textContent=x.toFixed(3);document.getElementById('vy').textContent=obj(x).toFixed(3);document.getElementById('vg').textContent=grad(x).toFixed(3);
+function fmt(a){return a.length?a.slice(0,8).map(function(v){return v.toFixed(2)}).join(' → ')+(a.length>8?' …':''):'-'}
+document.getElementById('ta').textContent=fmt(tr.a);document.getElementById('td').textContent=fmt(tr.d);
+['ma','md'].forEach(function(id){var on=(id==='ma')===(mode==='a'),b=document.getElementById(id);b.style.background=on?'var(--bg-accent)':'';b.style.color=on?'var(--text-accent)':'';b.setAttribute('aria-pressed',on)});
+var same=tr.a.length>1&&tr.d.length>1&&tr.a.slice(0,Math.min(tr.a.length,tr.d.length)).every(function(v,j){return Math.abs(v-tr.d[j])<1e-9}),t;
+if(same)t='두 기록의 x가 걸음마다 똑같습니다. 올라가기와 내려가기는 부호만 다른 같은 계산입니다.';
+else if(tr[mode].length<=1)t=(mode==='a'?'파란 점수 곡선':'주황 손실 곡선')+'입니다. 상수 c를 바꾸면 곡선이 위아래로 움직이고 0선과의 위치가 바뀌지만, 기울기는 그대로입니다.';
+else if(Math.abs(grad(x))<0.01)t='기울기가 거의 0인 곳에 멈췄습니다. 출발점에 따라 큰 언덕이 아니라 작은 언덕(국소 최댓값)에 멈출 수도 있습니다.';
+else t='걸음이 진행 중입니다. 다른 버튼으로 바꿔 같은 출발점에서 다시 걸어 보십시오.';
+document.getElementById('nw').textContent=t}
+document.getElementById('ma').onclick=function(){mode='a';reset()};
+document.getElementById('md').onclick=function(){mode='d';reset()};
+document.getElementById('b1').onclick=function(){step();draw()};
+document.getElementById('b20').onclick=function(){for(var i=0;i<20;i++)step();draw()};
+document.getElementById('br').onclick=reset;
+x0.addEventListener('input',function(){tr={a:[],d:[]};reset()});
+cc.addEventListener('input',draw);
+reset();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>

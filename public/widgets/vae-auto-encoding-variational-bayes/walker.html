@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCMC 걸음</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">언덕이 두 개인 분포 위를 등산객이 한 걸음씩 걸으며 발자국 막대그래프가 목표 분포를 닮아 가는 MCMC 시뮬레이션</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:0 0 12px">
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">걸음 수</div><div id="mn" style="font-size:22px;font-weight:500">0</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">옮긴 비율 (수락률)</div><div id="ma" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">지금 위치</div><div id="mx" style="font-size:22px;font-weight:500">-3.5</div></div>
+</div>
+<svg id="pl" width="100%" viewBox="0 0 680 260" role="img" aria-label="목표 분포 곡선과 발자국 막대그래프"></svg>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:4px 0 12px">
+<span><span style="display:inline-block;width:14px;height:2px;background:#D85A30;margin:0 6px 4px 0"></span>목표 분포 (예시)</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#7F77DD;opacity:.6;margin-right:6px"></span>발자국 막대</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1D9E75;margin-right:6px"></span>제안 수락</span>
+<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#E24B4A;margin-right:6px"></span>제안 거절</span>
+</div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px">
+<label for="ss" style="font-size:14px;color:var(--text-secondary)">걸음 크기</label>
+<input type="range" id="ss" min="0.1" max="3" step="0.1" value="1" style="flex:1;min-width:140px">
+<span id="sso" style="font-size:14px;font-weight:500;min-width:28px;text-align:right">1.0</span>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button id="b1">1걸음</button><button id="b100">100걸음</button><button id="b1k">1000걸음</button><button id="br">처음부터</button>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px;margin:14px 0 0">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">등산객이 왼쪽 끝에서 출발합니다. 버튼을 눌러 걸어 보십시오.</div>
+</div>
+<script>
+(function(){
+var X0=-4,X1=4,PL=40,PR=640,TOP=30,BASE=210,NB=40;
+function p(x){return 0.6*Math.exp(-Math.pow(x+1.5,2)/(2*0.36))+0.4*Math.exp(-Math.pow(x-1.8,2)/(2*0.64))}
+var Z=0,g=2000,i;for(i=0;i<g;i++){var gx=X0+(X1-X0)*(i+0.5)/g;Z+=p(gx)*(X1-X0)/g}
+var pl=document.getElementById('pl'),ss=document.getElementById('ss');
+var x,n,acc,bins,last;
+function sx(v){return PL+(v-X0)/(X1-X0)*(PR-PL)}
+function nrm(){var u=Math.max(Math.random(),1e-9),v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)}
+function reset(){x=-3.5;n=0;acc=0;bins=new Array(NB).fill(0);last=null;draw()}
+function step(){var s=parseFloat(ss.value),xp=x+s*nrm(),ok=false;
+if(xp>X0&&xp<X1){var r=p(xp)/p(x);if(Math.random()<Math.min(1,r))ok=true}
+last={from:x,to:xp,ok:ok};if(ok){x=xp;acc++}n++;
+var b=Math.floor((x-X0)/(X1-X0)*NB);if(b>=0&&b<NB)bins[b]++}
+function draw(){
+var maxD=0.6,h='',bw=(X1-X0)/NB,ys=(BASE-TOP)/maxD;
+h+='<line x1="'+PL+'" y1="'+BASE+'" x2="'+PR+'" y2="'+BASE+'" stroke="var(--border-strong)" stroke-width="0.5"/>';
+for(i=-4;i<=4;i+=2){h+='<text class="ts" x="'+sx(i)+'" y="'+(BASE+18)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">'+i+'</text>'}
+if(n>0){for(i=0;i<NB;i++){var d=bins[i]/(n*bw),hh=Math.min(d,maxD)*ys;if(hh>0)h+='<rect x="'+(sx(X0+i*bw)+0.5).toFixed(1)+'" y="'+(BASE-hh).toFixed(1)+'" width="'+((PR-PL)/NB-1).toFixed(1)+'" height="'+hh.toFixed(1)+'" fill="#7F77DD" opacity="0.55"/>'}}
+var pts=[];for(i=0;i<=200;i++){var cx=X0+(X1-X0)*i/200;pts.push(sx(cx).toFixed(1)+','+(BASE-p(cx)/Z*ys).toFixed(1))}
+h+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#D85A30" stroke-width="2"/>';
+if(last&&last.to>X0&&last.to<X1){var c=last.ok?'#1D9E75':'#E24B4A';h+='<line x1="'+sx(last.from).toFixed(1)+'" y1="'+(BASE+34)+'" x2="'+sx(last.to).toFixed(1)+'" y2="'+(BASE+34)+'" stroke="'+c+'" stroke-width="1.5" stroke-dasharray="3 3"/><circle cx="'+sx(last.to).toFixed(1)+'" cy="'+(BASE+34)+'" r="5" fill="'+c+'"/>'}
+h+='<circle cx="'+sx(x).toFixed(1)+'" cy="'+(BASE+34)+'" r="7" fill="var(--text-primary)"/>';
+pl.innerHTML=h;
+document.getElementById('mn').textContent=n.toLocaleString();
+document.getElementById('ma').textContent=n?Math.round(acc/n*100)+'%':'-';
+document.getElementById('mx').textContent=x.toFixed(2);
+var s=parseFloat(ss.value),t;
+if(n===0)t='등산객이 왼쪽 끝에서 출발합니다. 버튼을 눌러 걸어 보십시오.';
+else if(n<60)t='아직 걸음이 적어서 발자국 막대가 목표 분포와 많이 다릅니다.';
+else if(s<=0.3)t='걸음이 너무 작아서 거의 다 옮기지만, 한 언덕 근처를 오래 맴돌아 다른 언덕을 늦게 찾습니다.';
+else if(s>=2.2)t='걸음이 너무 커서 제안이 자주 낮은 곳에 떨어지고, 대부분 거절되어 제자리에 머뭅니다.';
+else if(n<1500)t='등산객이 두 언덕을 오가고 있습니다. 걸음이 더 쌓이면 막대가 곡선에 더 가까워집니다.';
+else t='발자국이 많이 쌓여서 막대 모양이 두 언덕 곡선을 닮았습니다. 이것이 MCMC로 얻은 샘플입니다.';
+document.getElementById('nw').textContent=t;
+document.getElementById('sso').textContent=s.toFixed(1)}
+function run(k){for(var j=0;j<k;j++)step();draw()}
+document.getElementById('b1').onclick=function(){run(1)};
+document.getElementById('b100').onclick=function(){run(100)};
+document.getElementById('b1k').onclick=function(){run(1000)};
+document.getElementById('br').onclick=reset;
+ss.addEventListener('input',draw);
+reset();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>
