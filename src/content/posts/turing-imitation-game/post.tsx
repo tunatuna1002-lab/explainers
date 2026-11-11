@@ -204,7 +204,7 @@ function NoteBox({ id }: { id: string }) {
   const note = NOTES[id];
   return (
     <Callout lead={`${id} · ${note.verdict}`} tone={TONE[note.verdict]}>
-      <span style={{ display: "block", color: "var(--text-secondary)", marginBottom: 4 }}>
+      <span style={{ display: "block", color: "var(--text-secondary)", fontSize: "var(--fs-subtext)", lineHeight: "var(--lh-subtext)", marginBottom: 4 }}>
         Moonlight AI 답변: “{note.claim}”
       </span>
       {note.body}

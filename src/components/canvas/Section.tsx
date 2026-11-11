@@ -33,8 +33,8 @@ export function Section({ heading, id, caption, children }: SectionProps) {
     <p
       style={{
         margin: 0,
-        fontSize: theme.font.subtext.fontSize,
-        lineHeight: theme.font.subtext.lineHeight,
+        fontSize: 13,
+        lineHeight: "20px",
         color: theme.text.secondary,
       }}
     >

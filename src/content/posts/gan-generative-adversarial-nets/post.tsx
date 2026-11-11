@@ -46,9 +46,9 @@ function Slider({ id, label, value, min, max, step, show, onChange }: SliderProp
     <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
       <label
         htmlFor={id}
-        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", gap: 8 }}
+        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}
       >
-        <span>{label}</span>
+        <span style={{ fontSize: theme.font.body2.fontSize }}>{label}</span>
         <output htmlFor={id} style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
           {show}
         </output>

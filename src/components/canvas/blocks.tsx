@@ -214,8 +214,8 @@ export function Table({ columns, rows, emphasis, align }: TableProps) {
                   borderTop: "none",
                   borderBottom: `1px solid ${theme.border.strong}`,
                   textAlign: ends[i] ? "right" : "left",
-                  fontSize: theme.font.subtext.fontSize,
-                  lineHeight: theme.font.subtext.lineHeight,
+                  fontSize: theme.font.body2.fontSize,
+                  lineHeight: theme.font.body2.lineHeight,
                   fontWeight: 600,
                   color: theme.text.secondary,
                   whiteSpace: wide || ends[i] ? "nowrap" : undefined,
@@ -377,7 +377,7 @@ export function Properties({ items }: { items: readonly PropertyItem[] }) {
     >
       {items.map((it, i) => (
         <div key={i} className="cv-prop">
-          <dt style={{ color: theme.text.secondary }}>{it.label}</dt>
+          <dt style={{ color: theme.text.secondary, fontSize: theme.font.body2.fontSize }}>{it.label}</dt>
           <dd style={{ color: theme.text.primary }}>{it.value}</dd>
         </div>
       ))}

@@ -142,7 +142,7 @@ const sections = groups
     font-weight: 600;
     letter-spacing: -0.03em;
   }
-  .block-head .sub { display: block; color: var(--text-tertiary); font-weight: 500; }
+  .block-head .sub { display: block; margin-top: 8px; font-size: 20px; line-height: 1.4; letter-spacing: -0.01em; color: var(--text-tertiary); font-weight: 500; }
   .pill {
     flex: none;
     padding: 6px 16px;
@@ -193,11 +193,11 @@ const sections = groups
     align-items: center;
     column-gap: 16px;
     row-gap: 4px;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 22px;
     color: var(--text-secondary);
   }
-  .more { display: inline-flex; align-items: center; gap: 6px; color: var(--text-primary); font-weight: 500; }
+  .more { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; color: var(--text-primary); font-weight: 500; }
   .more svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; transition: transform 120ms; }
   .item:hover .more svg { transform: translateX(3px); }
 
@@ -221,6 +221,7 @@ const sections = groups
     .hero h1 { font-size: 36px; }
     .block { margin: 0 -20px; padding: 48px 20px 64px; }
     .block-head h2 { font-size: 26px; }
+    .block-head .sub { font-size: 17px; }
     .grid { grid-template-columns: 1fr; }
     .item-title, .item-lg .item-title { font-size: 21px; }
     .item { padding: 22px 16px 24px; }

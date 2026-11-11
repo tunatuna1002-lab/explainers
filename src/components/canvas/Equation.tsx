@@ -23,7 +23,7 @@ export function Equation({ label, children }: EquationProps) {
           </span>
         ))}
       </div>
-      {label ? <span style={{ color: theme.text.secondary }}>{label}</span> : null}
+      {label ? <span style={{ color: theme.text.secondary, fontSize: theme.font.subtext.fontSize }}>{label}</span> : null}
     </div>
   );
 }

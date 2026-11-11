@@ -79,9 +79,9 @@ function LabSlider({ id, label, value, min, max, step, onChange }: LabSliderProp
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <label
         htmlFor={id}
-        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between" }}
+        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}
       >
-        <span>{label}</span>
+        <span style={{ fontSize: theme.font.body2.fontSize }}>{label}</span>
         <output htmlFor={id} style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
           {show}
         </output>
@@ -323,7 +323,7 @@ function SamplingLab() {
         <span>
           {fx(mu)} + {fx(sigma)} × ({fx(last, 4)}) ≈ {fx(z, 4)}
         </span>
-        <span style={{ color: theme.text.secondary }}>ε는 평균 0, 표준편차 1인 정규분포 N(0, 1)에서 뽑은 난수입니다(p.5, §2.4).</span>
+        <span style={{ color: theme.text.secondary, fontSize: theme.font.body2.fontSize }}>ε는 평균 0, 표준편차 1인 정규분포 N(0, 1)에서 뽑은 난수입니다(p.5, §2.4).</span>
       </LabBox>
       <DistPlot m={mu} s={sigma} samples={eps.map((e) => mu + sigma * e)} show={theory} current={z} label="선택한 정규분포와 뽑은 표본의 밀도" />
       <Legend
@@ -394,7 +394,7 @@ function GradientLab() {
         <span>
           ε = {fx(e, 4)} → z = {fx(z, 4)} → f(z) = z² = {fx(z * z, 4)}
         </span>
-        <span style={{ color: theme.text.secondary }}>
+        <span style={{ color: theme.text.secondary, fontSize: theme.font.body2.fontSize }}>
           {reparam ? "ε를 고정한 미분: ∂z/∂μ = 1, ∂z/∂σ = ε" : "추출기를 미분 규칙이 없는 연산으로 취급합니다."}
         </span>
         <span style={{ color: reparam ? good : bad }}>
@@ -482,7 +482,7 @@ function GaussianKLLab() {
           KL(q ‖ p) = <strong style={{ ...theme.font.body1 }}>{fx(v, 6)}</strong> nat (자연로그 기준)
         </span>
         {neg ? <span>원문의 −KL = {fx(-v, 6)} nat</span> : null}
-        <span style={{ color: theme.text.secondary }}>
+        <span style={{ color: theme.text.secondary, fontSize: theme.font.body2.fontSize }}>
           KL = ½(μ² + σ² − 1 − ln σ²) = ½ × ({fx(m2, 4)} + {fx(s2, 4)} − 1 − ln {fx(s2, 4)}) ≈ {fx(v, 6)}
         </span>
       </LabBox>
@@ -561,7 +561,7 @@ function Quiz() {
                 </button>
               ))}
             </div>
-            <p aria-live="polite" style={{ ...theme.font.subtext, margin: "8px 0 0", minHeight: 24, color: p === null ? theme.text.tertiary : ok ? theme.text.success : theme.text.danger }}>
+            <p aria-live="polite" style={{ ...theme.font.subtext, ...(p === null ? theme.font.body2 : {}), margin: "8px 0 0", minHeight: 24, color: p === null ? theme.text.tertiary : ok ? theme.text.success : theme.text.danger }}>
               {p === null ? "아직 답을 고르지 않았습니다." : (ok ? "정답입니다. " : "다시 생각해 보십시오. ") + q.why}
             </p>
           </fieldset>

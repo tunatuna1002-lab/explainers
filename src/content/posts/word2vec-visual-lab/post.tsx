@@ -222,7 +222,7 @@ export default function App() {
   const styles = {
     stack: { display: "grid", gap: 16, minWidth: 0 },
     wrap: { display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", minWidth: 0 },
-    small: { ...theme.font.subtext, color: theme.text.secondary, overflowWrap: "anywhere" },
+    small: { fontSize: 13, lineHeight: "20px", color: theme.text.secondary, overflowWrap: "anywhere" },
     label: { ...theme.font.label, color: theme.text.primary, overflowWrap: "anywhere" },
     box: {
       padding: 16,

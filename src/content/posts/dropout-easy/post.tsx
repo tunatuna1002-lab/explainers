@@ -54,9 +54,9 @@ function Slider({ id, label, value, min, max, step, show, onChange }: SliderProp
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
       <label
         htmlFor={id}
-        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between" }}
+        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}
       >
-        <span>{label}</span>
+        <span style={{ fontSize: theme.font.body2.fontSize }}>{label}</span>
         <output htmlFor={id} style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
           {show}
         </output>
@@ -376,7 +376,7 @@ function CountLab() {
         >
           {`2의 ${n}제곱 = ${fmt(total)}가지`}
         </p>
-        <p style={{ margin: "4px 0 0", ...theme.font.subtext, color: theme.text.secondary }}>
+        <p style={{ margin: "4px 0 0", ...theme.font.body2, color: theme.text.secondary }}>
           {`지금 보는 조합 ${fmt(idx + 1)} / ${fmt(total)} · 남은 뉴런 ${on}개`}
         </p>
       </div>
@@ -650,7 +650,7 @@ function Quiz({ items, idPrefix }: { items: readonly QuizItem[]; idPrefix: strin
             ))}
             <p
               aria-live="polite"
-              style={{ margin: 0, minHeight: "1.5em", ...theme.font.subtext, color: chosen === null ? theme.text.tertiary : right ? theme.text.successDeep : theme.text.dangerDeep }}
+              style={{ margin: 0, minHeight: "1.5em", ...theme.font.subtext, ...(chosen === null ? theme.font.body2 : {}), color: chosen === null ? theme.text.tertiary : right ? theme.text.successDeep : theme.text.dangerDeep }}
             >
               {chosen === null ? "답을 고르면 해설이 나옵니다." : `${right ? "정답입니다. " : "다시 확인해 보세요. "}${it.why}`}
             </p>

@@ -144,9 +144,9 @@ function ScoreLab() {
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <label
           htmlFor="ln-size"
-          style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between" }}
+          style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}
         >
-          <span>배치 크기 (학생 수)</span>
+          <span style={{ fontSize: theme.font.body2.fontSize }}>배치 크기 (학생 수)</span>
           <output htmlFor="ln-size" style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
             {n}명
           </output>
@@ -341,9 +341,9 @@ function Slider({ id, label, value, min, max, step, show, onChange }: SliderProp
     <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
       <label
         htmlFor={id}
-        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", gap: 8 }}
+        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}
       >
-        <span>{label}</span>
+        <span style={{ fontSize: theme.font.body2.fontSize }}>{label}</span>
         <output htmlFor={id} style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
           {show}
         </output>
