@@ -23,12 +23,19 @@ const IN_X = 110;
 const HID_X = 340;
 const OUT_X = 570;
 const R = 15;
+// 은닉 뉴런 하나가 쓰는 연결 수: 입력 4개 + 출력 2개.
+const LINKS_PER_HIDDEN = IN_Y.length + OUT_Y.length;
 
 type Mode = "train" | "test";
 const MODE_OPTIONS = [
   { value: "train" as const, label: "학습 모드" },
   { value: "test" as const, label: "테스트 모드" },
 ];
+
+const sum = (a: readonly number[]) => a.reduce((s, x) => s + x, 0);
+const fmt = (x: number, d = 2) =>
+  new Intl.NumberFormat("ko-KR", { maximumFractionDigits: d }).format(Math.abs(x) < 1e-10 ? 0 : x);
+const percent = (x: number) => `${fmt(x * 100, 3)}%`;
 
 interface SliderProps {
   id: string;
@@ -64,7 +71,9 @@ function Slider({ id, label, value, min, max, step, show, onChange }: SliderProp
         aria-valuetext={show}
         onChange={(e) => {
           const next = Number(e.currentTarget.value);
-          if (Number.isFinite(next)) onChange(Math.round(Math.min(max, Math.max(min, next)) * 10) / 10);
+          if (!Number.isFinite(next)) return;
+          const snapped = Math.round(Math.min(max, Math.max(min, next)) / step) * step;
+          onChange(Number(snapped.toFixed(4)));
         }}
         style={{ width: "100%", minWidth: 0, minHeight: 36, margin: 0, accentColor: theme.text.accent }}
       />
@@ -72,12 +81,13 @@ function Slider({ id, label, value, min, max, step, show, onChange }: SliderProp
   );
 }
 
-function ActionButton({ label, onClick }: { label: string; onClick: () => void }) {
+function ActionButton({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
   const theme = useGrokTheme();
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       style={{
         ...theme.font.subtext,
         fontFamily: theme.font.family,
@@ -87,11 +97,31 @@ function ActionButton({ label, onClick }: { label: string; onClick: () => void }
         borderRadius: theme.radius.md,
         padding: "8px 14px",
         minHeight: 36,
-        cursor: "pointer",
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.45 : 1,
       }}
     >
       {label}
     </button>
+  );
+}
+
+function Check({ id, label, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  const theme = useGrokTheme();
+  return (
+    <label
+      htmlFor={id}
+      style={{ ...theme.font.subtext, color: theme.text.primary, display: "inline-flex", alignItems: "center", gap: 8, minHeight: 36, cursor: "pointer" }}
+    >
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.currentTarget.checked)}
+        style={{ width: 17, height: 17, margin: 0, accentColor: theme.text.accent }}
+      />
+      {label}
+    </label>
   );
 }
 
@@ -103,13 +133,13 @@ function DropoutLab() {
   const [mode, setMode] = useState<Mode>("train");
   const [alive, setAlive] = useState<boolean[]>(ALL_ON);
   const [steps, setSteps] = useState(0);
-  const [sum, setSum] = useState(0);
+  const [sumOut, setSumOut] = useState(0);
   const [last, setLast] = useState<number | null>(null);
 
   const reset = () => {
     setAlive(ALL_ON);
     setSteps(0);
-    setSum(0);
+    setSumOut(0);
     setLast(null);
   };
 
@@ -125,13 +155,14 @@ function DropoutLab() {
     setMode("train");
     setAlive(mask);
     setSteps((s) => s + count);
-    setSum((s) => s + add);
+    setSumOut((s) => s + add);
     setLast(got);
   };
 
   const test = mode === "test";
   const shown = test ? ALL_ON : alive;
   const kept = alive.filter(Boolean).length;
+  const shownKept = shown.filter(Boolean).length;
   const baseW = 3;
   const outW = test ? baseW * p : baseW;
 
@@ -287,14 +318,376 @@ function DropoutLab() {
       <Properties
         items={[
           { label: "학습 단계 수", value: String(steps) },
+          { label: "지금 남은 은닉 뉴런", value: `${shownKept} / 8` },
+          { label: "지금 쓰는 연결", value: `${shownKept * LINKS_PER_HIDDEN} / ${8 * LINKS_PER_HIDDEN}` },
+          { label: "여러 번 뽑을 때 남는 뉴런 수의 이론 평균", value: `${fmt(8 * p)}개` },
           { label: "이번 단계에 출력 1이 받은 합 (예시)", value: last === null || test ? "-" : last.toFixed(2) },
-          { label: "학습 때 평균, 지금까지 (예시)", value: steps ? (sum / steps).toFixed(2) : "-" },
+          { label: "학습 때 평균, 지금까지 (예시)", value: steps ? (sumOut / steps).toFixed(2) : "-" },
           { label: "테스트 때: 전부 켜고 가중치 × p (예시)", value: (TOTAL * p).toFixed(2) },
         ]}
       />
     </div>
   );
 }
+
+function CountLab() {
+  const theme = useGrokTheme();
+  const [n, setN] = useState(4);
+  const [index, setIndex] = useState(10);
+  const [hide, setHide] = useState(false);
+
+  const total = 2 ** n;
+  const idx = index % total;
+  const bits = idx.toString(2).padStart(n, "0").split("").map(Number);
+  const on = sum(bits);
+  const growth: number[] = [];
+  for (let i = Math.max(1, n - 4); i <= n; i++) growth.push(i);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+        <ActionButton label="다음 조합" onClick={() => setIndex(idx + 1)} />
+        <Check id="do-count-hide" label="꺼진 뉴런 숨기기" checked={hide} onChange={setHide} />
+      </div>
+      <Slider
+        id="do-count-n"
+        label="드롭아웃 대상 뉴런 수 n"
+        value={n}
+        min={1}
+        max={20}
+        step={1}
+        show={`${n}개`}
+        onChange={(v) => {
+          setN(v);
+          setIndex((i) => i % 2 ** v);
+        }}
+      />
+      <div>
+        <p
+          style={{
+            margin: 0,
+            fontSize: theme.font.heading2.fontSize,
+            lineHeight: theme.font.heading2.lineHeight,
+            fontWeight: theme.weight.semibold,
+            color: theme.text.accentDeep,
+            fontVariantNumeric: "tabular-nums",
+            overflowWrap: "anywhere",
+          }}
+        >
+          {`2의 ${n}제곱 = ${fmt(total)}가지`}
+        </p>
+        <p style={{ margin: "4px 0 0", ...theme.font.subtext, color: theme.text.secondary }}>
+          {`지금 보는 조합 ${fmt(idx + 1)} / ${fmt(total)} · 남은 뉴런 ${on}개`}
+        </p>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }} aria-label="현재 조합의 켜짐과 꺼짐">
+        {bits.map((b, i) => (
+          <div
+            key={i}
+            aria-label={`뉴런 ${i + 1}: ${b ? "남음" : "꺼짐"}`}
+            style={{ width: 48, textAlign: "center", ...theme.font.caption, color: theme.text.secondary }}
+          >
+            <span>{`${i + 1}번`}</span>
+            <span
+              style={{
+                display: "grid",
+                placeItems: "center",
+                height: 34,
+                marginTop: 2,
+                borderRadius: theme.radius.md,
+                border: `1px solid ${b ? theme.text.accent : theme.border.default}`,
+                background: b ? theme.fill.accentSubtle : theme.bg.subtle,
+                color: b ? theme.text.accentDeep : theme.text.tertiary,
+                visibility: !b && hide ? "hidden" : "visible",
+              }}
+            >
+              {b ? "켜짐" : "꺼짐"}
+            </span>
+          </div>
+        ))}
+      </div>
+      <Bars
+        emphasis={growth.length - 1}
+        bars={growth.map((i) => ({ label: `n=${i}`, value: 2 ** i, display: `${fmt(2 ** i)}가지` }))}
+      />
+    </div>
+  );
+}
+
+const SCALE_VALUES = [2, 4, 6];
+
+interface MethodView {
+  title: string;
+  current: number;
+  mean: number;
+  test: number;
+  values: number[];
+  explain: string;
+}
+
+function ScaleBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const theme = useGrokTheme();
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "72px minmax(0,1fr) 44px", alignItems: "center", gap: 6, ...theme.font.caption }}>
+      <span style={{ color: theme.text.secondary }}>{label}</span>
+      <span style={{ height: 10, background: theme.fill.secondary, borderRadius: 4, overflow: "hidden" }}>
+        <span style={{ display: "block", height: "100%", width: `${(value / max) * 100}%`, background: color }} />
+      </span>
+      <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", color: theme.text.primary }}>{fmt(value)}</span>
+    </div>
+  );
+}
+
+function ScaleLab() {
+  const theme = useGrokTheme();
+  const [k, setK] = useState(0.8);
+  const [mode, setMode] = useState<Mode>("train");
+  const [mask, setMask] = useState<number[]>([1, 0, 1]);
+
+  const draw = (p: number) => setMask(SCALE_VALUES.map(() => (Math.random() < p ? 1 : 0)));
+  const isTrain = mode === "train";
+  const base = sum(SCALE_VALUES);
+  const raw = sum(SCALE_VALUES.map((v, i) => v * mask[i]));
+  const max = base / k;
+
+  let pMean = 0;
+  let tMean = 0;
+  let probTotal = 0;
+  const rows: string[][] = [];
+  for (let i = 0; i < 2 ** SCALE_VALUES.length; i++) {
+    const m = i.toString(2).padStart(SCALE_VALUES.length, "0").split("").map(Number);
+    const kept = sum(m);
+    const prob = k ** kept * (1 - k) ** (m.length - kept);
+    const a = sum(SCALE_VALUES.map((v, j) => v * m[j]));
+    pMean += prob * a;
+    tMean += (prob * a) / k;
+    probTotal += prob;
+    rows.push([m.join(" "), percent(prob), fmt(a), fmt(a / k)]);
+  }
+  rows.push(["확률 합 / 학습 평균", percent(probTotal), fmt(pMean), fmt(tMean)]);
+
+  const methods: MethodView[] = [
+    {
+      title: "논문 기본 방식",
+      current: isTrain ? raw : k * base,
+      mean: pMean,
+      test: k * base,
+      values: SCALE_VALUES.map((v, i) => (isTrain ? v * mask[i] : v * k)),
+      explain: isTrain ? "남은 값은 그대로, 꺼진 값은 0." : "모든 뉴런을 쓰고, 나가는 가중치에 남길 확률을 곱합니다.",
+    },
+    {
+      title: "학습 때 1/p로 키우는 방식 (§10, PyTorch 기본)",
+      current: isTrain ? raw / k : base,
+      mean: tMean,
+      test: base,
+      values: SCALE_VALUES.map((v, i) => (isTrain ? (v * mask[i]) / k : v)),
+      explain: isTrain ? `남은 값을 남길 확률 ${fmt(k)}로 나눕니다.` : "모든 뉴런의 값을 그대로 사용합니다.",
+    },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <Callout lead="p의 이름표 바꾸기 (논문 밖)" tone="info">
+        {`논문 p: 남길 확률 ${fmt(k)} ↔ PyTorch p: 끌 확률 ${fmt(1 - k)}`}
+      </Callout>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+        <Segmented
+          options={[
+            { value: "train" as const, label: "학습" },
+            { value: "test" as const, label: "테스트" },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
+        <ActionButton label="새 마스크" onClick={() => draw(k)} disabled={!isTrain} />
+        <ActionButton
+          label="처음으로"
+          onClick={() => {
+            setK(0.8);
+            setMode("train");
+            draw(0.8);
+          }}
+        />
+      </div>
+      <Slider
+        id="do-scale-p"
+        label="남길 확률 p"
+        value={k}
+        min={0.1}
+        max={1}
+        step={0.05}
+        show={percent(k)}
+        onChange={(v) => {
+          setK(v);
+          draw(v);
+        }}
+      />
+      <Text>
+        {`예시 값: 고정 활성값 ${SCALE_VALUES.join(", ")} · 모든 가중치 1 · 편향 0 · 끄기 전 합 ${fmt(base)}. 두 방식에 같은 마스크를 씁니다.`}
+      </Text>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+        {methods.map((m, mi) => {
+          const color = mi === 0 ? theme.dataviz.categorical[0] : theme.dataviz.categorical[1];
+          return (
+            <div
+              key={m.title}
+              style={{
+                border: `1px solid ${theme.border.default}`,
+                borderRadius: theme.radius.lg,
+                padding: 14,
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
+              <p style={{ margin: 0, ...theme.font.subtext, fontWeight: theme.weight.semibold, color: theme.text.primary }}>{m.title}</p>
+              <p style={{ margin: 0, ...theme.font.caption, color: theme.text.secondary }}>{`현재 ${isTrain ? "학습" : "테스트"} 모드의 입력 합`}</p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: theme.font.heading2.fontSize,
+                  lineHeight: theme.font.heading2.lineHeight,
+                  fontWeight: theme.weight.semibold,
+                  color: theme.text.accentDeep,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {fmt(m.current)}
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {m.values.map((v, i) => {
+                  const off = isTrain && !mask[i];
+                  return (
+                    <span
+                      key={i}
+                      aria-label={`${i + 1}번 기여값 ${fmt(v)}`}
+                      style={{
+                        minWidth: 48,
+                        padding: "6px 8px",
+                        borderRadius: theme.radius.md,
+                        textAlign: "center",
+                        ...theme.font.subtext,
+                        fontVariantNumeric: "tabular-nums",
+                        background: off ? theme.bg.subtle : theme.fill.accentSubtle,
+                        color: off ? theme.text.tertiary : theme.text.accentDeep,
+                        textDecoration: off ? "line-through" : "none",
+                      }}
+                    >
+                      {fmt(v)}
+                    </span>
+                  );
+                })}
+              </div>
+              <p style={{ margin: 0, ...theme.font.caption, color: theme.text.secondary }}>{m.explain}</p>
+              <ScaleBar label="현재 합" value={m.current} max={max} color={color} />
+              <ScaleBar label="학습 평균" value={m.mean} max={max} color={color} />
+              <ScaleBar label="테스트 값" value={m.test} max={max} color={theme.text.tertiary} />
+            </div>
+          );
+        })}
+      </div>
+      <Text>
+        "학습 평균"은 모든 마스크의 결과에 각 마스크가 나올 확률을 곱해 더한 값입니다. 한 번 추첨한 값은 이 평균과 다를 수 있습니다.
+        두 방식은 같은 활성값을 넣어도 절대 크기가 다를 수 있습니다. 각 방식 안에서 학습 평균과 테스트 값이 같은지 비교하십시오.
+      </Text>
+      <details>
+        <summary style={{ ...theme.font.subtext, color: theme.text.primary, cursor: "pointer" }}>모든 마스크로 평균을 계산한 표 보기</summary>
+        <div style={{ marginTop: 12 }}>
+          <Table columns={["마스크", "확률", "논문식 학습 합", "1/p 확대식 학습 합"]} rows={rows} />
+          <p style={{ margin: "8px 0 0", ...theme.font.caption, color: theme.text.secondary }}>
+            마스크의 1은 남김, 0은 끔입니다. 표시는 반올림하지만 평균 계산에는 반올림 전 값을 사용합니다.
+          </p>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+interface QuizItem {
+  q: string;
+  choices: string[];
+  answer: number;
+  why: string;
+  source: string;
+}
+
+function Quiz({ items, idPrefix }: { items: readonly QuizItem[]; idPrefix: string }) {
+  const theme = useGrokTheme();
+  const [picked, setPicked] = useState<(number | null)[]>(items.map(() => null));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {items.map((it, i) => {
+        const chosen = picked[i];
+        const right = chosen === it.answer;
+        return (
+          <div key={i} role="group" aria-labelledby={`${idPrefix}-${i}`} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <p id={`${idPrefix}-${i}`} style={{ margin: 0, ...theme.font.body1, fontWeight: theme.weight.semibold, color: theme.text.primary }}>
+              {`${i + 1}. ${it.q}`}
+            </p>
+            <p style={{ margin: 0, ...theme.font.caption, color: theme.text.secondary }}>{it.source}</p>
+            {it.choices.map((c, j) => (
+              <button
+                key={j}
+                type="button"
+                aria-pressed={chosen === j}
+                onClick={() => setPicked((prev) => prev.map((v, k) => (k === i ? j : v)))}
+                style={{
+                  ...theme.font.subtext,
+                  fontFamily: theme.font.family,
+                  textAlign: "left",
+                  color: theme.text.primary,
+                  background: chosen === j ? theme.fill.accentSubtle : theme.bg.base,
+                  border: `1px solid ${chosen === j ? theme.text.accent : theme.border.default}`,
+                  borderRadius: theme.radius.md,
+                  padding: "8px 12px",
+                  minHeight: 40,
+                  cursor: "pointer",
+                }}
+              >
+                {c}
+              </button>
+            ))}
+            <p
+              aria-live="polite"
+              style={{ margin: 0, minHeight: "1.5em", ...theme.font.subtext, color: chosen === null ? theme.text.tertiary : right ? theme.text.successDeep : theme.text.dangerDeep }}
+            >
+              {chosen === null ? "답을 고르면 해설이 나옵니다." : `${right ? "정답입니다. " : "다시 확인해 보세요. "}${it.why}`}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const QUIZ: QuizItem[] = [
+  {
+    q: "논문에서 남길 확률 p가 0.8이면, PyTorch nn.Dropout의 p에는 무엇을 넣나요? (논문 밖)",
+    choices: ["0.8", "0.2", "1.25"],
+    answer: 1,
+    why: "PyTorch의 p는 끌 확률이므로 1 - 0.8 = 0.2입니다. (논문 밖)",
+    source: "논문의 p 정의: p.2, §1 · API 연결은 논문 밖",
+  },
+  {
+    q: "켜고 끌 수 있는 뉴런이 4개라면, 가능한 마스크는 몇 가지인가요? (예시 값)",
+    choices: ["4가지", "8가지", "16가지"],
+    answer: 2,
+    why: "뉴런마다 켜짐과 꺼짐 두 가지이므로 2 × 2 × 2 × 2 = 16가지입니다.",
+    source: "p.3, §1",
+  },
+  {
+    q: "논문 방식에서 테스트 때 가중치에 p를 곱하는 이유는 무엇인가요?",
+    choices: [
+      "고정된 활성값이 다음 층에 보내는 선형 입력의 평균 크기를 맞추려고",
+      "모든 학습 실행의 결과를 똑같이 만들려고",
+      "전체 비선형 망의 예측 평균과 항상 정확히 같게 만들려고",
+    ],
+    answer: 0,
+    why: "평균적인 신호 크기를 맞춥니다. 비선형 층이 이어지는 전체 망의 모델 평균은 일반적으로 근사입니다.",
+    source: "p.3, §1·그림 2 / pp.5-6, §4",
+  },
+];
 
 function CompareFigure() {
   const theme = useGrokTheme();
@@ -379,7 +772,7 @@ export default function App() {
   return (
     <Page
       title="Dropout 쉽게 보기 (Srivastava 외, 2014)"
-      summary="드롭아웃은 학습 때 뉴런을 무작위로 꺼서 매번 다른 얇은 망을 학습하고, 테스트 때는 모두 켠 채 가중치에 p(남길 확률)를 곱해 그 많은 망의 평균을 한 번에 흉내 내는 방법입니다."
+      summary="드롭아웃은 학습 때 뉴런을 무작위로 꺼서 매번 다른 얇은 망을 학습하고, 테스트 때는 모두 켠 채 가중치에 p(남길 확률)를 곱해 그 많은 망의 평균을 한 번에 흉내 내는 방법입니다. 뉴런 n개에서 나오는 얇은 망 2^n개를 세어 보고, 학습 때 1/p로 키우는 방식(PyTorch 기본)과도 비교합니다."
       width="column"
       lang="ko"
     >
@@ -387,7 +780,9 @@ export default function App() {
         items={[
           { label: "한 장면 비유", id: "analogy" },
           { label: "직접 움직여 보기", id: "lab" },
+          { label: "얇아진 망은 몇 가지일까", id: "thinned" },
           { label: "기존 방법과 비교", id: "compare" },
+          { label: "학습과 테스트의 크기 맞추기", id: "scale" },
           { label: "논문 근거 위치", id: "evidence" },
           { label: "주의", id: "caution" },
           { label: "확인 질문과 답", id: "quiz" },
@@ -410,18 +805,17 @@ export default function App() {
             ["뉴런, 유닛(unit)", "값 하나를 받아 다음 층으로 넘기는 작은 계산 단위"],
             ["드롭아웃(dropout)", "학습 때 뉴런을 무작위로 잠시 끄는 방법"],
             ["얇아진 망(thinned network)", "일부 뉴런이 꺼진 채 남은 망"],
+            ["마스크(mask)", "이번 학습에서 어느 뉴런을 켜고 끌지 정한 표"],
             ["p", "뉴런을 남길 확률. 지울 확률이 아닙니다"],
             ["과적합(overfitting)", "학습 데이터만 외워서 새 데이터에서 틀리는 현상"],
           ]}
         />
-        <Text>
-          뉴런이 n개면 얇아진 망은 2^n개(2를 n번 곱한 수)가 나올 수 있습니다. 이 망들은 모두 같은 가중치를 함께 씁니다 (p.3).
-        </Text>
       </Section>
 
       <Section heading="직접 움직여 보기" id="lab" caption="모든 뉴런 값과 합계는 예시입니다">
         <Text>
           먼저 "다음 학습 단계"를 여러 번 누르십시오. 누를 때마다 다른 은닉 뉴런이 꺼집니다. 꺼진 뉴런의 연결선도 함께 사라집니다.
+          뉴런마다 따로 추첨하므로 남는 개수도 매번 달라집니다. 매번 정확히 절반을 끄는 규칙이 아닙니다 (p.2, 그림 1 · pp.5-6, §4).
         </Text>
         <DropoutLab />
         <Text>
@@ -430,7 +824,24 @@ export default function App() {
         </Text>
         <Text>
           p 슬라이더를 움직이면 평균적으로 남는 뉴런 수가 바뀝니다. p가 1.0이면 아무것도 끄지 않으므로 드롭아웃이 없는 망과 같습니다.
+          이 그림은 은닉층만 끄고 입력과 출력은 고정합니다. 가중치를 실제로 학습하지는 않습니다.
         </Text>
+      </Section>
+
+      <Section heading="얇아진 망은 몇 가지일까" id="thinned" caption="뉴런 수와 조합은 예시입니다">
+        <Text>
+          위 그림에서 누를 때마다 나온 망 하나하나가 얇아진 망입니다. 끌 수 있는 뉴런이 n개면 얇아진 망은 2^n개(2를 n번 곱한 수)가
+          나올 수 있습니다 (p.3, §1). 뉴런 하나가 늘 때마다 가능한 조합이 두 배가 됩니다.
+        </Text>
+        <CountLab />
+        <Text>
+          켜짐과 꺼짐이 모두 가능한 확률에서 센 조합입니다. 모두 꺼지는 조합도 포함합니다. 각 조합이 나올 확률이 모두 같은 것은 p가
+          0.5일 때뿐입니다.
+        </Text>
+        <Callout lead="망이 2^n개 따로 있다는 뜻은 아닙니다" tone="info">
+          이 망들은 모두 같은 가중치(연결의 세기)를 함께 씁니다. 그래서 매개변수 수는 그대로입니다. 원문은 각 얇은 망이 "아주 드물게,
+          어쩌면 한 번도" 학습되지 않는다고 씁니다 (p.3, §1: "each thinned network gets trained very rarely, if at all").
+        </Callout>
       </Section>
 
       <Section heading="기존 방법과 비교" id="compare">
@@ -466,6 +877,33 @@ export default function App() {
           0.95% 망은 파라미터가 6,500만 개 이상이고, 학습 데이터는 6만 장입니다. 데이터보다 훨씬 큰 망도 드롭아웃과 함께라면 과적합을 덜 했다고 볼 수 있습니다 (추정).
           CIFAR-10은 14.98%에서 12.61%로, CIFAR-100은 43.48%에서 37.20%로 오류율이 줄었습니다 (p.10, 표 4).
         </Text>
+        <Text>
+          큰 사진 분류에서도 같은 결과가 나옵니다. 이 논문은 ImageNet(ILSVRC-2010) 결과로 "Conv Net + dropout (Krizhevsky et al.,
+          2012)"의 top-5 오류율 17.0%를 싣습니다 (p.12, §6.1.4, 표 5). 이 망이 AlexNet입니다. AlexNet은 완전연결층 두 개에
+          드롭아웃을 썼습니다. 자세한 구조와 드롭아웃을 쓴 위치는{" "}
+          <a href="/posts/alexnet-imagenet-classification/">AlexNet 쉽게 보기</a>에서 직접 움직여 볼 수 있습니다.
+        </Text>
+      </Section>
+
+      <Section heading="학습과 테스트의 크기 맞추기" id="scale" caption="활성값과 가중치는 예시입니다">
+        <Text>
+          02절 그림은 무작위로 여러 번 뽑은 평균이 테스트 값에 가까워지는 것을 보였습니다. 여기서는 뉴런을 3개로 줄여 가능한 마스크
+          8개를 모두 세어 정확한 평균을 계산합니다 (p.3, 그림 2 · pp.5-6, §4).
+        </Text>
+        <Text>
+          크기를 맞추는 방법은 두 가지입니다. 논문의 기본 방식은 학습 때 그대로 두고 테스트 때 가중치에 p를 곱합니다. 다른 방식은 학습
+          때 남은 값을 1/p배로 키우고 테스트 때는 아무것도 바꾸지 않습니다. 원문 §10은 이 방식을 "같은 효과를 내는 다른 방법"으로
+          소개합니다. 층마다 학습률과 초기 가중치를 알맞게 맞추면 두 방법이 같다고 씁니다 (p.23, §10).
+        </Text>
+        <ScaleLab />
+        <Callout lead="코드의 p는 뜻이 반대입니다 (논문 밖)" tone="danger">
+          PyTorch nn.Dropout(p)의 p는 "지울" 확률입니다. 논문의 p는 "남길" 확률입니다. PyTorch는 학습 때 남은 값을 1/(1-p)배로 키우므로
+          테스트 때 곱하지 않습니다. 논문 기호로 쓰면 위의 1/p 확대 방식과 같습니다.
+        </Callout>
+        <Text>
+          이 실험은 고정된 활성값이 다음 층에 보내는 선형 입력 합(활성화 함수에 들어가기 전 값)만 계산합니다. 비선형 처리가 이어지는
+          전체 망의 최종 예측 평균은 일반적으로 근사입니다.
+        </Text>
       </Section>
 
       <Section heading="논문 근거 위치" id="evidence">
@@ -473,13 +911,17 @@ export default function App() {
           columns={["내용", "위치"]}
           rows={[
             ["학습 때 뉴런을 무작위로 끔", "p.1, 초록"],
+            ["표준 망과 얇아진 망 그림", "p.2, 그림 1"],
             ["p는 남길 확률, 은닉 0.5, 실수값 입력 0.8", "p.2 §1, p.25 부록 A.4"],
             ["입력 20%, 은닉 50%를 지우는 것이 자주 최적", "p.5, §3"],
-            ["2^n개의 얇은 망, 가중치 공유", "p.3"],
+            ["2^n개의 얇은 망, 가중치 공유, 각 망은 드물게 학습", "p.3, §1"],
             ["테스트 때 가중치 × p, 기댓값과 같게", "p.3, §1, 그림 2"],
+            ["뉴런마다 Bernoulli(p)로 따로 추첨", "pp.5-6, §4"],
             ["MNIST 오류율 1.60% → 0.95%", "p.9, §6.1.1, 표 2"],
             ["CIFAR-10, CIFAR-100 오류율", "p.10, 표 4"],
+            ["ImageNet: Conv Net + dropout (AlexNet) top-5 17.0%", "p.12, §6.1.4, 표 5"],
             ["데이터가 아주 적으면 효과 없음", "p.18, §7.4, 그림 10"],
+            ["학습 때 1/p로 키우는 같은 효과의 방법", "p.23, §10"],
             ["학습이 보통 2~3배 느림", "p.24, §11"],
           ]}
         />
@@ -488,6 +930,10 @@ export default function App() {
         </Callout>
         <Callout lead="핵심 원문 문장 (p.3 그림 2 캡션)">
           "The output at test time is same as the expected output at training time."
+        </Callout>
+        <Callout lead="핵심 원문 문장 (p.23 §10)">
+          "Another way to achieve the same effect is to scale up the retained activations by multiplying by 1/p at training time and
+          not modifying the weights at test time."
         </Callout>
       </Section>
 
@@ -499,19 +945,24 @@ export default function App() {
           MNIST에서 100장, 500장처럼 데이터가 아주 적으면 드롭아웃 효과가 없었습니다. 데이터가 늘면 효과가 커졌다가 다시 줄었습니다
           (p.18, §7.4, 그림 10).
         </Callout>
-        <Callout lead="코드의 p는 뜻이 반대입니다 (논문 밖)" tone="danger">
-          PyTorch nn.Dropout(p)의 p는 "지울" 확률입니다. 논문의 p는 "남길" 확률입니다. PyTorch는 학습 때 남은 값을 1/(1-p)배로 키우므로
-          테스트 때 곱하지 않습니다.
+        <Callout lead="정확히 맞는 것은 다음 층 입력의 평균입니다" tone="info">
+          테스트 때 × p는 한 층의 선형 입력 평균을 맞춥니다. 특정 학습 1회와 테스트가 같은 결과를 낸다는 뜻이 아닙니다. 비선형 층을
+          여러 개 거친 최종 예측의 평균은 근사입니다 (p.3, §1).
+        </Callout>
+        <Callout lead="실험 화면은 학습을 하지 않습니다" tone="info">
+          이 글의 그림은 마스크와 합만 계산합니다. 가중치 학습이나 정확도 측정은 하지 않습니다. 정확도 숫자는 모두 논문 표에서 가져왔습니다.
         </Callout>
       </Section>
 
       <Section heading="확인 질문과 답" id="quiz">
-        <Callout lead="질문" tone="info">
+        <Text>앞의 그림에서 확인한 내용으로 답해 보십시오. 고르면 바로 해설이 나옵니다.</Text>
+        <Quiz items={QUIZ} idPrefix="do-quiz" />
+        <Callout lead="한 걸음 더: 말로 답하는 질문" tone="info">
           테스트 때 뉴런을 모두 켜면서 가중치에 p를 곱하지 않으면, 다음 층이 받는 값은 어떻게 될까요? 그 결과 어떤 문제가 생길까요?
           먼저 말로 답해 본 뒤 아래를 읽으십시오.
         </Callout>
         <Text>
-          위 그림으로 확인해 보십시오. p = 0.5일 때 학습 때 출력 1이 받는 합의 평균은 2.2 근처입니다 (예시). 테스트 때 모두 켜고
+          02절 그림으로 확인해 보십시오. p = 0.5일 때 학습 때 출력 1이 받는 합의 평균은 2.2 근처입니다 (예시). 테스트 때 모두 켜고
           곱하지 않으면 4.4를 받습니다 (예시). 1/p배, 여기서는 2배로 커집니다.
         </Text>
         <Callout lead="답" tone="success">
@@ -530,6 +981,10 @@ export default function App() {
           Nitish Srivastava, Geoffrey Hinton, Alex Krizhevsky, Ilya Sutskever, Ruslan Salakhutdinov. "Dropout: A Simple Way to Prevent
           Neural Networks from Overfitting". Journal of Machine Learning Research 15, 1929-1958, 2014.
           https://jmlr.org/papers/v15/srivastava14a.html
+        </Text>
+        <Text>
+          쪽 번호는 PDF의 첫 쪽을 1로 센 번호입니다. 함께 읽기: <a href="/posts/alexnet-imagenet-classification/">AlexNet 쉽게 보기</a>{" "}
+          (드롭아웃을 완전연결층에 쓴 2012년 ImageNet 논문).
         </Text>
       </Section>
     </Page>
