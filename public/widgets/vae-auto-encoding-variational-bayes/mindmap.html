@@ -26,7 +26,7 @@ var D={t:'AEVB 학습 노트',c:[
 {t:'5. 차원의 저주',c:[{t:'계산량 폭발'},{t:'데이터 희소성'},{t:'거리 집중'},{t:'정보는 남음'}]},
 {t:'6. 베이즈 정리',c:[{t:'같은 칸 두 길'},{t:'|는 ~중에서'},{t:'분모 p(x)가 막힘'}]},
 {t:'7. 상승 vs 하강',c:[{t:'목표로 선택'},{t:'−f로 서로 변환'},{t:'상한은 폭주만 막음'}]},
-{t:'8. 하한 L 연결',c:[{t:'L ≤ log p(x)'},{t:'MNIST L ≤ 0'},{t:'그림 2·3 읽기'},{t:'다음: 식 3'}]}]};
+{t:'8. 하한 L·KL',c:[{t:'L ≤ log p(x)'},{t:'MNIST L ≤ 0'},{t:'그림 2·3 읽기'},{t:'KL: 간격과 벌점'},{t:'가우시안 닫힌 식'}]}]};
 var svg=document.getElementById('mm'),z=1,NS='http://www.w3.org/2000/svg',H=30,GAP=40,COL=210;
 function w(n){return n.t.length*13+30}
 function setAll(n,v){if(n.c){n.x=v;n.c.forEach(function(k){setAll(k,v)})}}

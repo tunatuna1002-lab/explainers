@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KL 발산 탐색</title>
+<link rel="stylesheet" href="shim.css">
+</head>
+<body>
+<h2 class="sr-only">두 결과(A, B)를 가진 분포 q와 p를 슬라이더로 바꾸면 칸별 기여와 KL(q||p), KL(p||q)가 바뀌는 위젯</h2>
+<div style="display:grid;gap:8px;margin:0 0 14px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="qa" style="font-size:14px;color:var(--text-secondary);min-width:170px">인코더 추측 q(A)</label><input type="range" id="qa" min="0.01" max="0.99" step="0.01" value="0.9" style="flex:1;min-width:140px"><span id="qao" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">0.90</span></div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><label for="pa" style="font-size:14px;color:var(--text-secondary);min-width:170px">참 사후분포 p(A)</label><input type="range" id="pa" min="0.01" max="0.99" step="0.01" value="0.37" style="flex:1;min-width:140px"><span id="pao" style="font-size:14px;font-weight:500;min-width:40px;text-align:right">0.37</span></div>
+</div>
+<svg id="sv" width="100%" viewBox="0 0 680 230" role="img" aria-label="q와 p의 막대와 칸별 KL 기여"></svg>
+<div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary);margin:4px 0 12px">
+<span><span style="display:inline-block;width:10px;height:10px;background:#7F77DD;margin-right:6px"></span>q (인코더 추측)</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#1D9E75;margin-right:6px"></span>p (참 사후분포)</span>
+<span><span style="display:inline-block;width:10px;height:10px;background:#D85A30;margin-right:6px"></span>칸별 기여 q × log(q/p)</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 12px">
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">KL(q‖p)</div><div id="k1" style="font-size:22px;font-weight:500">-</div></div>
+<div style="background:var(--surface-1);border-radius:var(--radius);padding:10px 14px"><div style="font-size:13px;color:var(--text-secondary)">KL(p‖q)</div><div id="k2" style="font-size:22px;font-weight:500">-</div></div>
+</div>
+<div style="background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:12px 16px">
+<div style="font-size:13px;color:var(--text-secondary)">지금 보고 있는 것</div>
+<div id="nw" style="font-size:15px;line-height:1.6">-</div>
+</div>
+<script>
+(function(){
+var qa=document.getElementById('qa'),pa=document.getElementById('pa'),sv=document.getElementById('sv');
+function kl(a,b){var s=0;for(var i=0;i<a.length;i++)s+=a[i]*Math.log(a[i]/b[i]);return s}
+function draw(){
+var q=[+qa.value,1-qa.value],p=[+pa.value,1-pa.value];
+document.getElementById('qao').textContent=q[0].toFixed(2);document.getElementById('pao').textContent=p[0].toFixed(2);
+var c=[q[0]*Math.log(q[0]/p[0]),q[1]*Math.log(q[1]/p[1])],K1=c[0]+c[1],K2=kl(p,q);
+var h='',B=150,S=120,lab=['A','B'];
+h+='<line x1="40" y1="'+B+'" x2="360" y2="'+B+'" stroke="var(--border-strong)" stroke-width="0.5"/>';
+for(var i=0;i<2;i++){var x=70+i*160;
+h+='<rect x="'+x+'" y="'+(B-q[i]*S).toFixed(1)+'" width="40" height="'+(q[i]*S).toFixed(1)+'" fill="#7F77DD" rx="3"/>';
+h+='<rect x="'+(x+48)+'" y="'+(B-p[i]*S).toFixed(1)+'" width="40" height="'+(p[i]*S).toFixed(1)+'" fill="#1D9E75" rx="3"/>';
+h+='<text x="'+(x+20)+'" y="'+(B-q[i]*S-6).toFixed(1)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">'+q[i].toFixed(2)+'</text>';
+h+='<text x="'+(x+68)+'" y="'+(B-p[i]*S-6).toFixed(1)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">'+p[i].toFixed(2)+'</text>';
+h+='<text x="'+(x+44)+'" y="'+(B+20)+'" text-anchor="middle" style="font-size:14px;font-weight:500;fill:var(--text-primary)">'+lab[i]+'</text>'}
+var Y0=110,sc=60;
+h+='<line x1="420" y1="'+Y0+'" x2="640" y2="'+Y0+'" stroke="var(--border-strong)" stroke-width="0.5"/>';
+h+='<text x="530" y="24" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">칸별 기여 (위: 양수, 아래: 음수)</text>';
+for(i=0;i<2;i++){var v=Math.max(-1.6,Math.min(1.6,c[i])),xx=450+i*100,hh=Math.abs(v)*sc;
+h+='<rect x="'+xx+'" y="'+(v>=0?Y0-hh:Y0).toFixed(1)+'" width="60" height="'+hh.toFixed(1)+'" fill="#D85A30" rx="3"/>';
+h+='<text x="'+(xx+30)+'" y="'+(v>=0?Y0-hh-6:Y0+hh+14).toFixed(1)+'" text-anchor="middle" style="font-size:12px;fill:var(--text-secondary)">'+c[i].toFixed(3)+'</text>';
+h+='<text x="'+(xx+30)+'" y="210" text-anchor="middle" style="font-size:14px;font-weight:500;fill:var(--text-primary)">'+lab[i]+'</text>'}
+sv.innerHTML=h;
+document.getElementById('k1').textContent=K1.toFixed(3);document.getElementById('k2').textContent=K2.toFixed(3);
+var t;
+if(Math.abs(q[0]-p[0])<0.005)t='두 분포가 같아서 칸별 기여가 모두 0이고, KL도 양쪽 다 0입니다.';
+else if(Math.abs(K1-K2)<0.02)t='두 분포가 달라서 KL이 0보다 큽니다. 지금은 두 방향의 값이 거의 같습니다.';
+else t='한 칸의 기여가 음수여도 합은 0보다 큽니다. 두 방향의 값이 '+K1.toFixed(3)+'과 '+K2.toFixed(3)+'로 다릅니다. 가중치로 쓰는 분포가 다르기 때문입니다.';
+document.getElementById('nw').textContent=t}
+qa.addEventListener('input',draw);pa.addEventListener('input',draw);draw();
+})();
+</script>
+<script src="shim.js"></script>
+</body>
+</html>
