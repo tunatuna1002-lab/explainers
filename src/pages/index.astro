@@ -3,10 +3,33 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
 const base = import.meta.env.BASE_URL;
-const posts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
-);
+const posts = await getCollection("posts", ({ data }) => !data.draft);
 const fmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+
+// 홈 목차: 주제별로 묶고, 묶음 안에서는 논문 연도 → order → 작성일 순서다.
+const groups = [
+  { key: "basics", label: "신경망이 배우는 법" },
+  { key: "vision", label: "이미지" },
+  { key: "language", label: "언어와 시퀀스" },
+  { key: "generative", label: "생성 모델" },
+  { key: "context", label: "큰 그림과 최신 연구" },
+  { key: undefined, label: "그 밖의 글" },
+];
+const kindLabel = { lab: "실습", qa: "논문 Q&A", concept: "개념", research: "연구 소개" } as const;
+
+const sections = groups
+  .map((g) => ({
+    ...g,
+    posts: posts
+      .filter((p) => p.data.category === g.key)
+      .sort(
+        (a, b) =>
+          (a.data.paperYear ?? 9999) - (b.data.paperYear ?? 9999) ||
+          a.data.order - b.data.order ||
+          a.data.date.valueOf() - b.data.date.valueOf(),
+      ),
+  }))
+  .filter((g) => g.posts.length > 0);
 ---
 
 <BaseLayout title="explainers" description="공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음">
@@ -15,23 +38,136 @@ const fmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", d
     <p class="mb-0 mt-3 text-[16px] leading-6 text-ink-2">
       공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음입니다.
     </p>
-    <ul class="m-0 mt-12 flex list-none flex-col gap-4 p-0">
-      {
-        posts.map((post) => (
-          <li>
-            <a
-              href={`${base}posts/${post.id}/`}
-              class="block rounded-2xl border border-line p-5 text-ink no-underline transition-colors duration-[120ms] hover:bg-[var(--fill-hover)]"
-            >
-              <h2 class="m-0 text-[20px] font-semibold leading-[26px]">{post.data.title}</h2>
-              <p class="mb-0 mt-2 text-[14px] leading-5 text-ink-2">{post.data.summary}</p>
-              <time class="mt-3 block text-[12px] leading-4 text-ink-3" datetime={post.data.date.toISOString()}>
-                {fmt.format(post.data.date)}
-              </time>
-            </a>
-          </li>
-        ))
-      }
-    </ul>
+
+    {
+      sections.map((s) => (
+        <section class="toc-group">
+          <h2 class="toc-head">
+            {s.label}
+            <span class="toc-count">{s.posts.length}</span>
+          </h2>
+          <ul class="toc-list">
+            {s.posts.map((post) => {
+              const d = post.data;
+              const noteId = `note-${post.id}`;
+              const meta = [d.authors, kindLabel[d.kind], `${fmt.format(d.date)} 작성`].filter(Boolean).join(" · ");
+              return (
+                <li class="toc-item">
+                  <a href={`${base}posts/${post.id}/`} class="toc-link" aria-describedby={noteId}>
+                    <span class="toc-year">{d.paperYear ?? ""}</span>
+                    <span class="toc-title">{d.shortTitle ?? d.title}</span>
+                  </a>
+                  <div class="toc-note" id={noteId} role="note">
+                    <p>{d.summary}</p>
+                    <p class="toc-meta">{meta}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))
+    }
   </main>
 </BaseLayout>
+
+<style>
+  .toc-group { margin-top: 48px; }
+  .toc-group + .toc-group { margin-top: 40px; }
+
+  .toc-head {
+    margin: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-default);
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--text-secondary);
+  }
+  .toc-count {
+    margin-left: 6px;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .toc-list { margin: 0; padding: 0; list-style: none; }
+  .toc-item { position: relative; border-bottom: 1px solid var(--border-subtle); }
+
+  .toc-link {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    align-items: baseline;
+    padding: 11px 0;
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+  .toc-year {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+  .toc-title {
+    font-size: 17px;
+    line-height: 26px;
+    font-weight: 500;
+    letter-spacing: var(--tracking-body);
+    transition: color 120ms;
+  }
+  .toc-item:hover .toc-title,
+  .toc-link:focus-visible .toc-title { color: var(--text-accent); }
+  .toc-link:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
+
+  /* 요약·저자·종류·작성일은 마우스를 올렸을 때만 보인다. 터치 화면에서는 숨긴다. */
+  .toc-note {
+    position: absolute;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 120ms, visibility 0s linear 120ms;
+    font-size: 14px;
+    line-height: 22px;
+    color: var(--text-secondary);
+    word-break: keep-all;
+  }
+  .toc-note p { margin: 0; }
+  .toc-note .toc-meta { margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--text-tertiary); }
+
+  @media (hover: hover) {
+    .toc-item:hover .toc-note,
+    .toc-link:focus-visible + .toc-note {
+      opacity: 1;
+      visibility: visible;
+      transition-delay: 80ms, 0s;
+    }
+  }
+  @media (hover: none) {
+    .toc-note { display: none; }
+  }
+
+  /* 넓은 화면: 오른쪽 여백에 곁주석처럼 */
+  @media (min-width: 1240px) {
+    .toc-note {
+      top: 12px;
+      left: calc(100% + 40px);
+      width: 250px;
+      padding-left: 14px;
+      border-left: 1px solid var(--border-default);
+    }
+  }
+  /* 좁은 화면: 행 아래에 떠 있는 상자로 */
+  @media (max-width: 1239.98px) {
+    .toc-note {
+      top: calc(100% - 4px);
+      left: 52px;
+      right: 0;
+      padding: 12px 14px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      box-shadow: 0 6px 20px -8px var(--scroll-shadow);
+    }
+  }
+</style>

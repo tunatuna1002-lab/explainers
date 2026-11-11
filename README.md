@@ -33,8 +33,14 @@ Grok Page 원본 코드(`export default function App()` 하나짜리 TSX)를 받
    ```mdx
    ---
    title: "…"      # Page title과 같게
-   summary: "…"    # Page summary와 같게 (홈 목록에 나온다)
+   summary: "…"    # 한두 문장. 홈 목차에서 마우스를 올리면 나온다
    date: 2026-11-02
+   category: basics # 홈 묶음: basics | vision | language | generative | context (없으면 "그 밖의 글")
+   shortTitle: "Adam"        # 홈 목차에 보일 짧은 제목 (없으면 title)
+   authors: "Kingma·Ba"      # 선택
+   paperYear: 2014           # 선택. 홈 왼쪽 연도 칸, 묶음 안 정렬 기준
+   kind: lab       # lab(실습) | qa(논문 Q&A) | concept(개념) | research(연구 소개)
+   # order: 1      # 같은 연도끼리 순서 (작을수록 위)
    # draft: true   # 홈과 빌드에서 뺀다
    ---
 
@@ -44,7 +50,7 @@ Grok Page 원본 코드(`export default function App()` 하나짜리 TSX)를 받
    ```
    상호작용(`useState` 등)이 없는 글은 `client:load`를 빼서 JS 없이 낸다.
 3. `npm run build`를 돌린다. 키트에 없는 부품을 쓰면 `astro check`가 컴파일 오류로 알려 준다. 그 부품을 `src/components/canvas/`에 같은 이름·props로 추가한다. 아직 없는 부품: Rows, Metrics, LineChart, Columns, Pie, Checklist, Quote 등.
-4. 홈(`/`)은 `draft`가 아닌 글을 날짜 역순으로 보여 준다. 글 주소는 `/posts/my-post/`다.
+4. 홈(`/`)은 `draft`가 아닌 글을 `category`로 묶고, 묶음 안에서 `paperYear` → `order` → `date` 순으로 보여 준다. 홈에는 연도와 짧은 제목만 보이고, 요약·저자·종류·작성일은 마우스를 올릴 때만 나온다. 글 주소는 `/posts/my-post/`다.
 
 수식이 필요하면 `src/components/Tex.tsx`의 `<Tex display>…LaTeX…</Tex>`를 쓴다(KaTeX). 키트의 `Equation`·`Frac`·`Sqrt`·`Pow`는 CSS 조판이다.
 

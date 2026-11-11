@@ -14,6 +14,13 @@ const posts = defineCollection({
     summary: z.string(),
     date: z.coerce.date(),
     draft: z.boolean().default(false),
+    // 홈 목차용 (모두 선택). 없으면 "그 밖의 글"에 제목 그대로 들어간다.
+    category: z.enum(["basics", "vision", "language", "generative", "context"]).optional(),
+    shortTitle: z.string().optional(),
+    authors: z.string().optional(),
+    paperYear: z.number().int().optional(),
+    kind: z.enum(["lab", "qa", "concept", "research"]).default("lab"),
+    order: z.number().default(0),
   }),
 });
 
