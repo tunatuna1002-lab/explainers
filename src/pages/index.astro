@@ -4,169 +4,228 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 
 const base = import.meta.env.BASE_URL;
 const posts = await getCollection("posts", ({ data }) => !data.draft);
-const fmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
+const ym = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", timeZone: "UTC" });
 
-// 홈 목차: 주제별로 묶고, 묶음 안에서는 논문 연도 → order → 작성일 순서다.
-// 연도는 같은 연도가 이어지면 첫 줄에만 쓴다.
+// 홈: 머리 문구 → 최근 글 4편 → 주제 묶음. 묶음 안은 논문 연도 → order → 작성일 순서다.
+// 참고: deepmind.google/research (큰 두 톤 제목, 두 칸 목록, 가는 구분선)
 const groups = [
-  { key: "basics", label: "신경망이 배우는 법" },
-  { key: "vision", label: "이미지" },
-  { key: "language", label: "언어와 시퀀스" },
-  { key: "generative", label: "생성 모델" },
-  { key: "context", label: "큰 그림과 최신 연구" },
-  { key: undefined, label: "그 밖의 글" },
+  { key: "basics", label: "학습의 기초", sub: "역전파에서 정규화까지, 신경망이 배우는 방법" },
+  { key: "vision", label: "이미지", sub: "깊은 합성곱 신경망의 두 이정표" },
+  { key: "language", label: "언어와 시퀀스", sub: "단어 벡터에서 번역, 어텐션까지" },
+  { key: "generative", label: "생성 모델", sub: "데이터를 새로 만들어 내는 두 가지 방법" },
+  { key: "context", label: "큰 그림과 최신 연구", sub: "튜링의 질문에서 오늘의 LLM까지" },
+  { key: undefined, label: "그 밖의 글", sub: "" },
 ];
+const groupLabel = Object.fromEntries(groups.map((g) => [g.key ?? "etc", g.label]));
 const kindLabel = { lab: "실습", qa: "논문 Q&A", concept: "개념", research: "연구 소개" } as const;
+const titleOf = (p: (typeof posts)[number]) =>
+  p.data.shortTitle ? (p.data.tagline ? `${p.data.shortTitle}: ${p.data.tagline}` : p.data.shortTitle) : p.data.title;
 
+const latest = [...posts].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()).slice(0, 4);
 const sections = groups
-  .map((g) => {
-    const list = posts
+  .map((g) => ({
+    ...g,
+    posts: posts
       .filter((p) => p.data.category === g.key)
       .sort(
         (a, b) =>
           (a.data.paperYear ?? 9999) - (b.data.paperYear ?? 9999) ||
           a.data.order - b.data.order ||
           a.data.date.valueOf() - b.data.date.valueOf(),
-      );
-    return {
-      ...g,
-      posts: list.map((p, i) => ({ post: p, showYear: i === 0 || list[i - 1].data.paperYear !== p.data.paperYear })),
-    };
-  })
+      ),
+  }))
   .filter((g) => g.posts.length > 0);
 ---
 
-<BaseLayout title="explainers" description="공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음" hideNav>
-  <main class="home">
-    <header class="intro">
-      <h1>explainers</h1>
-      <p class="sub">논문 공부 노트</p>
-      <p class="lead">공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음입니다. 제목에 마우스를 올리면 요약이 보입니다.</p>
-    </header>
+<BaseLayout title="explainers" description="공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음">
+  <main>
+    <section class="hero">
+      <p class="eyebrow">AI 논문 설명글</p>
+      <h1>논문을 직접 움직여 보며<br />이해하는 설명글</h1>
+    </section>
 
-    {
-      sections.map((s) => (
-        <section class="group">
-          <h2>{s.label}</h2>
-          <ul>
-            {s.posts.map(({ post, showYear }) => {
-              const d = post.data;
-              const noteId = `note-${post.id}`;
-              const meta = [d.authors, kindLabel[d.kind], `${fmt.format(d.date)} 작성`].filter(Boolean).join(" · ");
-              return (
-                <li class="row">
-                  <a href={`${base}posts/${post.id}/`} aria-describedby={noteId}>
-                    <span class="year">{showYear ? (d.paperYear ?? "") : ""}</span>
-                    <span class="label">
-                      <span class="title">{d.shortTitle ?? d.title}</span>
-                      {d.tagline && <span class="tagline">{d.tagline}</span>}
-                    </span>
-                    <span class="kind">{d.kind !== "lab" ? kindLabel[d.kind] : ""}</span>
-                  </a>
-                  <div class="note" id={noteId} role="note">
-                    <p>{d.summary}</p>
-                    <p class="meta">{meta}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      ))
-    }
+    <section class="block" id="latest">
+      <div class="block-head">
+        <h2>최근 글</h2>
+        <a class="pill" href="#basics">주제별로 보기</a>
+      </div>
+      <ul class="grid">
+        {latest.map((p) => (
+          <li>
+            <a class="item item-lg" href={`${base}posts/${p.id}/`}>
+              <span class="item-title">{titleOf(p)}</span>
+              <span class="item-meta">
+                <span>{ym.format(p.data.date)}</span>
+                <span>{groupLabel[p.data.category ?? "etc"]}</span>
+                <span class="more">읽기<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg></span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    {sections.map((s) => (
+      <section class="block" id={s.key ?? "etc"}>
+        <div class="block-head">
+          <h2>
+            {s.label}
+            {s.sub && <span class="sub">{s.sub}</span>}
+          </h2>
+        </div>
+        <ul class="grid">
+          {s.posts.map((p) => {
+            const d = p.data;
+            return (
+              <li>
+                <a class="item" href={`${base}posts/${p.id}/`}>
+                  <span class="item-title">{titleOf(p)}</span>
+                  <span class="item-meta">
+                    {d.paperYear && <span>{d.paperYear}</span>}
+                    {d.authors && <span>{d.authors}</span>}
+                    {d.kind !== "lab" && <span>{kindLabel[d.kind]}</span>}
+                    <span class="more">읽기<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" /></svg></span>
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    ))}
+
+    <footer class="foot">
+      <p class="foot-line">공부하며 질문한 내용을<br />그림과 예시로 풀어 씁니다</p>
+      <div class="foot-col">
+        <p class="foot-head">주제</p>
+        {sections.map((s) => <a href={`#${s.key ?? "etc"}`}>{s.label}</a>)}
+      </div>
+      <div class="foot-col">
+        <p class="foot-head">둘러보기</p>
+        <a href="#latest">최근 글</a>
+        <a href="#">맨 위로</a>
+      </div>
+    </footer>
   </main>
 </BaseLayout>
 
 <style>
-  /* 참고: minwookshin.com의 글자 중심 목록. 작은 글자, 선 없는 행, 왼쪽 연도 칸, 오른쪽 예외 표시. */
-  .home {
-    max-width: 590px;
+  main {
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 72px 20px 120px;
-    font-size: 15px;
-    line-height: 24px;
+    padding: 0 72px;
     color: var(--text-primary);
     word-break: keep-all;
   }
-  .intro h1 { margin: 0; font-size: 15px; line-height: 24px; font-weight: 500; letter-spacing: 0; }
-  .intro .sub { margin: 0; color: var(--text-tertiary); }
-  .intro .lead { margin: 20px 0 0; color: var(--text-primary); }
 
-  .group { margin-top: 48px; }
-  .group h2 {
-    margin: 0 0 8px;
-    font-size: 15px;
-    line-height: 24px;
-    font-weight: 400;
-    letter-spacing: 0;
-    color: var(--text-tertiary);
+  .hero { padding: 88px 0 120px; text-align: center; }
+  .eyebrow { margin: 0 0 20px; font-size: 17px; line-height: 24px; color: var(--text-secondary); }
+  .hero h1 {
+    margin: 0 auto;
+    max-width: 900px;
+    font-size: 54px;
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -0.035em;
   }
-  .group ul { margin: 0; padding: 0; list-style: none; }
 
-  .row { position: relative; }
-  .row a {
+  .block {
+    margin: 0 -72px;
+    padding: 72px 72px 96px;
+    border-top: 1px solid var(--border-weak);
+    scroll-margin-top: 8px;
+  }
+  .block-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
+  .block-head h2 {
+    margin: 0;
+    font-size: 32px;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+  .block-head .sub { display: block; color: var(--text-tertiary); font-weight: 500; }
+  .pill {
+    flex: none;
+    padding: 6px 16px;
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    font-size: 15px;
+    line-height: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background-color 120ms;
+  }
+  .pill:hover { background: var(--fill-hover); }
+
+  .grid {
+    margin: 0;
+    padding: 0;
+    list-style: none;
     display: grid;
-    grid-template-columns: 88px minmax(0, 1fr) auto;
-    column-gap: 16px;
-    padding: 2px 0;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 48px;
+  }
+  .grid li { border-bottom: 1px solid var(--border-weak); }
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0 -16px;
+    padding: 30px 16px 32px;
+    border-radius: 16px;
     color: inherit;
     text-decoration: none;
+    transition: background-color 120ms;
   }
-  .year { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-  .label { display: flex; flex-wrap: wrap; column-gap: 10px; min-width: 0; }
-  .title {
-    text-decoration: underline;
-    text-decoration-color: var(--border-default);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-    transition: text-decoration-color var(--motion-hover), color var(--motion-hover);
+  .item:hover { background: var(--bg-subtle); }
+  .item:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+  .item-title {
+    font-size: 24px;
+    line-height: 1.3;
+    font-weight: 500;
+    letter-spacing: -0.02em;
   }
-  .tagline { color: var(--text-tertiary); }
-  .kind { color: var(--text-tertiary); white-space: nowrap; }
-
-  .row:hover .title,
-  .row a:focus-visible .title { text-decoration-color: var(--text-primary); }
-  .row a:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 3px; }
-
-  /* 요약·저자·종류·작성일은 마우스를 올렸을 때만 보인다. 터치 화면에서는 숨긴다. */
-  .note {
-    position: absolute;
-    z-index: 10;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 120ms, visibility 0s linear 120ms;
-    font-size: 13px;
-    line-height: 21px;
+  .item-lg .item-title { font-size: 28px; line-height: 1.25; }
+  .item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 16px;
+    row-gap: 4px;
+    font-size: 15px;
+    line-height: 22px;
     color: var(--text-secondary);
   }
-  .note p { margin: 0; }
-  .note .meta { margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--text-tertiary); }
+  .more { display: inline-flex; align-items: center; gap: 6px; color: var(--text-primary); font-weight: 500; }
+  .more svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; transition: transform 120ms; }
+  .item:hover .more svg { transform: translateX(3px); }
 
-  @media (hover: hover) {
-    .row:hover .note,
-    .row a:focus-visible + .note { opacity: 1; visibility: visible; transition-delay: 80ms, 0s; }
+  .foot {
+    margin: 0 -72px;
+    padding: 80px 72px 120px;
+    border-top: 1px solid var(--border-weak);
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 48px;
   }
-  @media (hover: none) {
-    .note { display: none; }
-  }
-  @media (min-width: 1180px) {
-    .note { top: 2px; left: calc(100% + 48px); width: 240px; }
-  }
-  @media (max-width: 1179.98px) {
-    .note {
-      top: calc(100% + 2px);
-      left: 104px;
-      right: 0;
-      padding: 10px 12px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--border-weak);
-      border-radius: 6px;
-      box-shadow: 0 6px 18px -10px var(--scroll-shadow);
-    }
-  }
-  @media (max-width: 560px) {
-    .home { padding-top: 48px; }
-    .row a { grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 12px; }
+  .foot-line { margin: 0; font-size: 32px; line-height: 1.2; font-weight: 600; letter-spacing: -0.03em; }
+  .foot-col { display: flex; flex-direction: column; gap: 10px; font-size: 16px; line-height: 24px; }
+  .foot-head { margin: 0 0 6px; font-size: 20px; line-height: 28px; font-weight: 600; }
+  .foot-col a { color: var(--text-primary); text-decoration: none; }
+  .foot-col a:hover { color: var(--text-secondary); }
+
+  @media (max-width: 900px) {
+    main { padding: 0 20px; }
+    .hero { padding: 56px 0 72px; }
+    .hero h1 { font-size: 36px; }
+    .block { margin: 0 -20px; padding: 48px 20px 64px; }
+    .block-head h2 { font-size: 26px; }
+    .grid { grid-template-columns: 1fr; }
+    .item-title, .item-lg .item-title { font-size: 21px; }
+    .item { padding: 22px 16px 24px; }
+    .foot { margin: 0 -20px; padding: 56px 20px 80px; grid-template-columns: 1fr 1fr; }
+    .foot-line { grid-column: 1 / -1; font-size: 26px; }
   }
 </style>
