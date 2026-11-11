@@ -406,11 +406,567 @@ function MemoryFigure() {
   );
 }
 
+// ---- Adam 안을 들여다보는 세 실험 (Adam 복습 실험실과 같은 계산, 기울기 열과 결과는 모두 예시 값) ----
+// 여기서는 논문 기본값 α 0.001, β2 0.999, ε 10^-8을 그대로 쓴다 (p.2, 알고리즘 1).
+const LA = 0.001;
+const LB2 = 0.999;
+const LE = 1e-8;
+
+interface Moment {
+  t: number;
+  g: number;
+  m: number;
+  v: number;
+  mhat: number;
+  vhat: number;
+  rms: number;
+  eta: number;
+  step: number;
+  rawStep: number;
+}
+
+function moments(gs: number[], beta1 = 0.9, beta2 = LB2, alpha = LA, epsilon = LE): Moment[] {
+  let m = 0;
+  let v = 0;
+  return gs.map((g, i) => {
+    const t = i + 1;
+    m = beta1 * m + (1 - beta1) * g;
+    v = beta2 * v + (1 - beta2) * g * g;
+    const mhat = m / (1 - beta1 ** t);
+    const vhat = v / (1 - beta2 ** t);
+    const rms = Math.sqrt(vhat);
+    const eta = alpha / (rms + epsilon);
+    return { t, g, m, v, mhat, vhat, rms, eta, step: eta * mhat, rawStep: (alpha * m) / (Math.sqrt(v) + epsilon) };
+  });
+}
+
+const fmt = (x: number): string => {
+  if (!Number.isFinite(x)) return "계산 불가";
+  if (x === 0) return "0";
+  const a = Math.abs(x);
+  if (a < 0.0001 || a >= 10000) return x.toExponential(3);
+  return Number(x.toFixed(a < 0.01 ? 7 : a < 1 ? 6 : 4)).toString();
+};
+
+function LabButton({
+  label,
+  onClick,
+  disabled = false,
+  primary = false,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  primary?: boolean;
+}) {
+  const theme = useGrokTheme();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      style={{
+        ...theme.font.subtext,
+        fontFamily: theme.font.family,
+        color: primary ? theme.text.onPrimary : theme.text.primary,
+        background: primary ? theme.fill.primary : theme.fill.secondary,
+        border: `1px solid ${theme.border.default}`,
+        borderRadius: theme.radius.md,
+        padding: "8px 14px",
+        minHeight: 36,
+        cursor: disabled ? "default" : "pointer",
+        opacity: disabled ? 0.45 : 1,
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Formula({ lines }: { lines: string[] }) {
+  const theme = useGrokTheme();
+  return (
+    <div
+      style={{
+        ...theme.font.subtext,
+        fontFamily: theme.font.mono,
+        color: theme.text.primary,
+        background: theme.bg.subtle,
+        borderRadius: theme.radius.md,
+        padding: "10px 14px",
+        overflowWrap: "anywhere",
+      }}
+    >
+      {lines.map((l) => (
+        <div key={l}>{l}</div>
+      ))}
+    </div>
+  );
+}
+
+function Note({ children }: { children: string }) {
+  const theme = useGrokTheme();
+  return <p style={{ ...theme.font.caption, color: theme.text.secondary, margin: 0 }}>{children}</p>;
+}
+
+const ON_OFF_BIAS = [
+  { value: "on" as const, label: "편향 보정 켜기" },
+  { value: "off" as const, label: "편향 보정 끄기" },
+];
+
+function BiasLab() {
+  const theme = useGrokTheme();
+  const [beta1, setBeta1] = useState(0.9);
+  const [g, setG] = useState(2);
+  const [t, setT] = useState(1);
+  const [corr, setCorr] = useState<BiasKey>("on");
+  const on = corr === "on";
+  const data = useMemo(() => moments(Array(10).fill(g), beta1), [g, beta1]);
+  const cur = data[t - 1];
+  const chosen = on ? cur.step : cur.rawStep;
+
+  const W = 640;
+  const H = 230;
+  const l = 64;
+  const r = W - 16;
+  const top = 30;
+  const bottom = H - 42;
+  const max = Math.max(...data.map((d) => d.mhat), ...data.map((d) => d.m)) * 1.15;
+  const x = (s: number) => l + 8 + ((s - 1) / 9) * (r - l - 16);
+  const y = (v: number) => bottom - 6 - (v / max) * (bottom - top - 12);
+  const visible = data.filter((d) => d.t <= t);
+  const one = theme.dataviz.categorical[0];
+  const two = theme.dataviz.categorical[1];
+  const caption = { ...theme.font.caption, fill: theme.text.secondary };
+  const series: { key: "m" | "mhat"; color: string; dash: string }[] = [
+    { key: "m", color: one, dash: "" },
+    ...(on ? [{ key: "mhat" as const, color: two, dash: "6 4" }] : []),
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+        <Slider
+          id="bias-b1"
+          label="과거 방향 보존 비율 β1"
+          value={beta1}
+          min={0}
+          max={0.99}
+          step={0.01}
+          show={beta1.toFixed(2)}
+          onChange={setBeta1}
+        />
+        <Slider id="bias-g" label="매번 들어오는 기울기 g (예시)" value={g} min={0.2} max={4} step={0.1} show={g.toFixed(1)} onChange={setG} />
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <LabButton label="한 걸음" primary disabled={t === 10} onClick={() => setT((s) => Math.min(10, s + 1))} />
+        <LabButton label="10걸음 보기" onClick={() => setT(10)} />
+        <LabButton
+          label="처음"
+          onClick={() => {
+            setT(1);
+            setBeta1(0.9);
+            setG(2);
+            setCorr("on");
+          }}
+        />
+        <Segmented options={ON_OFF_BIAS} value={corr} onChange={setCorr} />
+      </div>
+      <Formula lines={["m ← β1 × 이전 m + (1 − β1) × g", "m̂ = m ÷ (1 − β1^t)   (β1^t는 β1의 t제곱)"]} />
+      <figure style={{ margin: 0 }}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-labelledby="bias-chart-title bias-chart-desc"
+          style={{ display: "block", width: "100%", height: "auto" }}
+        >
+          <title id="bias-chart-title">원시 평균 m과 보정 평균 m̂ (예시)</title>
+          <desc id="bias-chart-desc">매번 같은 기울기를 넣은 첫 열 걸음의 계산입니다. 아래 표에서 모든 수치를 볼 수 있습니다.</desc>
+          <rect x={l} y={top} width={r - l} height={bottom - top} fill="none" stroke={theme.border.default} />
+          {[0, 1, 2].map((j) => {
+            const v = (max * j) / 2;
+            const yy = y(v);
+            return (
+              <g key={j}>
+                <line x1={l} y1={yy} x2={r} y2={yy} stroke={theme.border.weak} />
+                <text x={l - 8} y={yy + 4} textAnchor="end" style={caption}>
+                  {fmt(v)}
+                </text>
+              </g>
+            );
+          })}
+          {[1, 4, 7, 10].map((s) => (
+            <text key={s} x={x(s)} y={bottom + 18} textAnchor="middle" style={caption}>
+              {s}
+            </text>
+          ))}
+          <text x={l} y={16} style={caption}>
+            방향 평균 (예시 값)
+          </text>
+          <text x={(l + r) / 2} y={H - 5} textAnchor="middle" style={caption}>
+            걸음 t
+          </text>
+          <g>
+            <line x1={r - 230} y1={12} x2={r - 206} y2={12} stroke={one} strokeWidth={2} />
+            <text x={r - 200} y={16} style={caption}>
+              원시 m (실선)
+            </text>
+            {on ? (
+              <>
+                <line x1={r - 110} y1={12} x2={r - 86} y2={12} stroke={two} strokeWidth={2} strokeDasharray="6 4" />
+                <text x={r - 80} y={16} style={caption}>
+                  보정 m̂ (점선)
+                </text>
+              </>
+            ) : null}
+          </g>
+          {series.map((s) => (
+            <g key={s.key}>
+              <path
+                d={visible.map((d, i) => `${i ? "L" : "M"}${x(d.t).toFixed(1)},${y(d[s.key]).toFixed(1)}`).join(" ")}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={2}
+                strokeDasharray={s.dash}
+              />
+              {visible.map((d) => (
+                <circle key={d.t} cx={x(d.t)} cy={y(d[s.key])} r={3} fill={s.color} />
+              ))}
+            </g>
+          ))}
+        </svg>
+      </figure>
+      <Properties
+        items={[
+          { label: `${t}번째 걸음, 보정 ${on ? "켬" : "끔"}`, value: `m ${fmt(cur.m)} / m̂ ${fmt(cur.mhat)}` },
+          { label: "원시 v / 보정 v̂", value: `${fmt(cur.v)} / ${fmt(cur.vhat)}` },
+          { label: "선택한 실제 이동 크기 |Δθ|", value: fmt(chosen) },
+          { label: "보정 켬 / 보정 끔", value: `${fmt(cur.step)} / ${fmt(cur.rawStep)}` },
+        ]}
+      />
+      <Table
+        columns={["걸음 t", "원시 m", "보정 m̂", "선택한 평균"]}
+        rows={data.map((d) => [
+          d.t === t ? `${d.t} ←` : String(d.t),
+          fmt(d.m),
+          fmt(d.mhat),
+          fmt(on ? d.mhat : d.m),
+        ])}
+      />
+      <Callout lead="지금 보고 있는 것" tone="info">
+        {`현재 m이 받는 기울기의 누적 가중치 합은 ${fmt(1 - beta1 ** t)}입니다. 그 합으로 나누면 m̂ = ${fmt(cur.mhat)}가 됩니다. m이 작아도 v도 작아지므로, 보정 없는 실제 이동량이 더 커질 수 있습니다.`}
+      </Callout>
+      <Note>
+        β2 = 0.999, α = 0.001, ε = 10^-8 고정. 토글은 m과 v를 함께 보정합니다. m과 v의 원시 기록 자체는 바꾸지 않습니다. 다른 종류의 통계적 편향까지 없애는 보정은 아닙니다.
+      </Note>
+    </div>
+  );
+}
+
+function computeScale(scale: number, epsilon: number, steps = 5) {
+  const b = [2, 0.2];
+  const s = [2 * scale, 0.2];
+  const base = b.map((gv) => moments(Array(steps).fill(gv), 0.9, LB2, LA, epsilon)[steps - 1]);
+  const scaled = s.map((gv) => moments(Array(steps).fill(gv), 0.9, LB2, LA, epsilon)[steps - 1]);
+  return {
+    base,
+    scaled,
+    rows: [
+      { label: "SGD · x", base: LA * b[0], scaled: LA * s[0] },
+      { label: "Adam · x", base: base[0].step, scaled: scaled[0].step },
+      { label: "SGD · y", base: LA * b[1], scaled: LA * s[1] },
+      { label: "Adam · y", base: base[1].step, scaled: scaled[1].step },
+    ],
+  };
+}
+
+const EPS_MODE = [
+  { value: "pos" as const, label: "ε > 0 (실제 설정)" },
+  { value: "zero" as const, label: "ε = 0 (수학적 조건)" },
+];
+
+function ScaleLab() {
+  const [c, setC] = useState(3);
+  const [exp, setExp] = useState(-8);
+  const [epsMode, setEpsMode] = useState<"pos" | "zero">("pos");
+  const zero = epsMode === "zero";
+  const eps = zero ? 0 : 10 ** exp;
+  const res = useMemo(() => computeScale(c, eps), [c, eps]);
+  const bars = res.rows.slice(0, 2).flatMap((row) => [
+    { label: `${row.label} · 원본`, value: row.base, display: fmt(row.base) },
+    { label: `${row.label} · 배율 적용`, value: row.scaled, display: fmt(row.scaled) },
+  ]);
+  const rx = res.rows[1];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+        <Slider id="scale-c" label="x 기울기 배율 c" value={c} min={0.1} max={10} step={0.1} show={`×${c.toFixed(1)}`} onChange={setC} />
+        <Slider
+          id="scale-eps"
+          label="ε 크기 (지수 조절, 예시 설정)"
+          value={exp}
+          min={-8}
+          max={0}
+          step={1}
+          show={zero ? "0" : `10^${exp} = ${fmt(eps)}`}
+          onChange={setExp}
+        />
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <Segmented options={EPS_MODE} value={epsMode} onChange={setEpsMode} />
+        <LabButton
+          label="처음 설정"
+          onClick={() => {
+            setC(3);
+            setExp(-8);
+            setEpsMode("pos");
+          }}
+        />
+      </div>
+      <Formula lines={["SGD 이동 크기 = α × |g|", "Adam 이동 크기 = α × |m̂| ÷ (√v̂ + ε)"]} />
+      <Text>5번째 걸음의 실제 이동 크기 |Δθ|입니다. 모든 막대는 같은 축을 씁니다 (예시 계산값).</Text>
+      <Bars bars={bars} emphasis="none" />
+      <Table
+        columns={["방법·좌표", "원본", "배율 적용", "이동량 비율"]}
+        rows={res.rows.map((row) => [row.label, fmt(row.base), fmt(row.scaled), `×${fmt(row.scaled / row.base)}`])}
+      />
+      <Properties
+        items={[
+          {
+            label: "x 이동량 비율",
+            value: `SGD ×${fmt(res.rows[0].scaled / res.rows[0].base)} / Adam ×${fmt(rx.scaled / rx.base)}`,
+          },
+          { label: "Adam x의 m̂", value: `${fmt(res.base[0].mhat)} → ${fmt(res.scaled[0].mhat)}` },
+          { label: "Adam x의 √v̂", value: `${fmt(res.base[0].rms)} → ${fmt(res.scaled[0].rms)}` },
+        ]}
+      />
+      <Callout lead="지금 보고 있는 것" tone="info">
+        {zero
+          ? "ε = 0: 분자 m̂은 c배, 분모 √v̂도 c배가 되어 약분됩니다. 이 예시에서 Adam의 이동량은 수치 오차를 빼면 정확히 같습니다."
+          : "ε > 0: ε는 배율을 따라 바뀌지 않아 정확한 불변성은 깨집니다. ε가 √v̂에 비해 작으면 거의 같습니다. 표시 자릿수 때문에 아주 작은 차이는 같아 보일 수 있습니다."}
+      </Callout>
+      <Note>
+        대각(diagonal)은 좌표를 섞지 않고 좌표마다 배율만 바꾼다는 뜻입니다. 전체 기울기 이력에 고정된 양의 배율을 곱한 경우를 비교합니다. 좌표 회전이나 매 걸음 다른 배율은 보장하지 않습니다. ε를 크게 바꾸는 것은 차이를 보려는 예시 설정입니다.
+      </Note>
+    </div>
+  );
+}
+
+function computeCoordinate(beta1: number, period: number, steps: number) {
+  const ga = Array(steps).fill(4);
+  const gb = Array.from({ length: steps }, (_, i) => ((i + 1) % period === 0 ? 1 : 0));
+  const a = moments(ga, beta1);
+  const b = moments(gb, beta1);
+  return { a: a[steps - 1], b: b[steps - 1], historyB: b };
+}
+
+const SHOW_MODE = [
+  { value: "step" as const, label: "실제 이동량 보기" },
+  { value: "eta" as const, label: "보정계수 보기" },
+];
+
+function CoordLab() {
+  const theme = useGrokTheme();
+  const [beta1, setBeta1] = useState(0.9);
+  const [period, setPeriod] = useState(5);
+  const [t, setT] = useState(10);
+  const [show, setShow] = useState<"step" | "eta">("step");
+  const real = show === "step";
+  const res = useMemo(() => computeCoordinate(beta1, period, t), [beta1, period, t]);
+  const recent = res.historyB.slice(-10);
+  const d = res.b;
+  const note =
+    d.vhat === 0
+      ? "B는 아직 기울기가 한 번도 없습니다. η가 커도 m̂ = 0이므로 실제 이동량은 0입니다."
+      : d.g === 0 && Math.abs(d.mhat) > 0
+        ? "B의 현재 g는 0이지만 과거 방향 평균 m̂이 남아 있어 계속 이동합니다."
+        : d.g === 0
+          ? "β1 = 0이면 현재 기울기가 0일 때 방향 평균도 0이 됩니다."
+          : "드문 기울기의 보정계수가 커도, 실제 이동량은 방향 평균 m̂을 함께 곱해 정해집니다.";
+  const valueOf = (m: Moment) => (real ? Math.abs(m.step) : m.eta);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+        <Slider id="coord-b1" label="과거 방향 보존 비율 β1" value={beta1} min={0} max={0.95} step={0.05} show={beta1.toFixed(2)} onChange={setBeta1} />
+        <Slider id="coord-period" label="B의 기울기가 나오는 간격" value={period} min={2} max={10} step={1} show={`${period}걸음마다`} onChange={setPeriod} />
+        <Slider id="coord-t" label="현재 걸음 t" value={t} min={1} max={30} step={1} show={String(t)} onChange={setT} />
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+        <LabButton label="한 걸음" primary disabled={t === 30} onClick={() => setT((s) => Math.min(30, s + 1))} />
+        <LabButton
+          label="처음"
+          onClick={() => {
+            setBeta1(0.9);
+            setPeriod(5);
+            setT(1);
+            setShow("step");
+          }}
+        />
+        <Segmented options={SHOW_MODE} value={show} onChange={setShow} />
+      </div>
+      <Formula lines={["보정계수 η = α ÷ (√v̂ + ε)", "실제 이동 크기 |Δθ| = η × |m̂|"]} />
+      <Note>{`B의 기울기 기록, ${recent[0].t}~${t}번째 걸음 (칸 윗줄: 걸음, 아랫줄: g)`}</Note>
+      <div
+        aria-label="B의 최근 기울기 기록"
+        style={{ display: "grid", gridTemplateColumns: "repeat(10, minmax(0, 1fr))", gap: 4 }}
+      >
+        {recent.map((h) => (
+          <span
+            key={h.t}
+            aria-label={`${h.t}번째 기울기 ${h.g}`}
+            style={{
+              ...theme.font.caption,
+              textAlign: "center",
+              padding: "6px 0",
+              minWidth: 0,
+              borderRadius: theme.radius.sm,
+              color: theme.text.primary,
+              background: h.g ? theme.fill.accentSubtle : theme.bg.subtle,
+              border: `1px solid ${h.g ? theme.border.strong : theme.border.weak}`,
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {h.t}
+            <br />
+            {h.g}
+          </span>
+        ))}
+      </div>
+      <Text>{real ? "실제 이동 크기 |Δθ| (예시 계산값)" : "보정계수 η (예시 계산값)"}</Text>
+      <Bars
+        bars={[
+          { label: "A · 매번 큰 기울기", value: valueOf(res.a), display: fmt(valueOf(res.a)) },
+          { label: "B · 드문 기울기", value: valueOf(res.b), display: fmt(valueOf(res.b)) },
+        ]}
+        emphasis="none"
+      />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+        {([
+          ["파라미터 A", res.a],
+          ["파라미터 B", res.b],
+        ] as const).map(([name, m]) => (
+          <div key={name} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <span style={{ ...theme.font.subtext, color: theme.text.primary, fontWeight: 600 }}>{name}</span>
+            <Properties
+              items={[
+                { label: "현재 기울기 g", value: fmt(m.g) },
+                { label: "보정 방향 평균 m̂", value: fmt(m.mhat) },
+                { label: "기울기 크기 √v̂", value: fmt(m.rms) },
+                { label: "보정계수 η", value: fmt(m.eta) },
+                { label: "실제 이동 크기 |Δθ|", value: fmt(Math.abs(m.step)) },
+              ]}
+            />
+          </div>
+        ))}
+      </div>
+      <Callout lead={real ? "지금 막대: 실제 이동 크기 |Δθ|" : "지금 막대: 보정계수 η"} tone="info">
+        {note}
+      </Callout>
+      <Note>
+        β2 = 0.999, α = 0.001, ε = 10^-8 고정. 아직 기울기가 한 번도 없으면 B의 실제 이동량은 0입니다. 이전 기울기가 있었다면 현재 g가 0이어도 방향 평균 m̂이 남을 수 있습니다.
+      </Note>
+    </div>
+  );
+}
+
+const QUIZ: { id: string; q: string; options: [string, string][]; correct: string; explain: string }[] = [
+  {
+    id: "q1",
+    q: "1. Adam의 v는 무엇을 모은 값인가요?",
+    options: [
+      ["a", "손실의 2차 미분"],
+      ["b", "기울기를 제곱한 값의 이동평균"],
+      ["c", "파라미터 값의 이동평균"],
+    ],
+    correct: "b",
+    explain: "v는 g²의 이동평균이며, 헤세 행렬(2차 미분을 모은 행렬)이나 2차 미분이 아닙니다. (p.2, 알고리즘 1)",
+  },
+  {
+    id: "q2",
+    q: "2. 편향 보정이 직접 다루는 원인은 무엇인가요?",
+    options: [
+      ["a", "m과 v를 0으로 시작한 영향"],
+      ["b", "데이터에 있는 모든 종류의 편향"],
+      ["c", "학습 데이터가 부족한 문제 전체"],
+    ],
+    correct: "a",
+    explain: "0으로 시작한 이동평균의 초기화 편향을 보정합니다. (p.2, §2 / p.3, §3)",
+  },
+  {
+    id: "q3",
+    q: "3. 여기서 확인한 정확한 배율 불변성의 조건은 무엇인가요?",
+    options: [
+      ["a", "좌표를 어떤 방향으로 회전해도 같습니다."],
+      ["b", "현재 기울기만 임의로 바꿔도 같습니다."],
+      ["c", "ε = 0이고, 각 좌표의 전체 이력에 고정된 양의 배율을 곱합니다."],
+    ],
+    correct: "c",
+    explain: "ε = 0에서 고정된 양의 좌표별 배율은 분자와 분모에서 약분됩니다. (p.3, §2.1)",
+  },
+];
+
+function Quiz() {
+  const theme = useGrokTheme();
+  const [picked, setPicked] = useState<Record<string, string>>({});
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {QUIZ.map((item) => {
+        const choice = picked[item.id];
+        const ok = choice === item.correct;
+        return (
+          <fieldset key={item.id} style={{ border: 0, padding: "8px 0", margin: 0, minWidth: 0 }}>
+            <legend style={{ ...theme.font.body1, color: theme.text.primary, fontWeight: 600, padding: 0, marginBottom: 4 }}>
+              {item.q}
+            </legend>
+            {item.options.map(([value, label]) => (
+              <label
+                key={value}
+                style={{
+                  ...theme.font.body1,
+                  color: theme.text.primary,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  padding: "6px 0",
+                  minHeight: 40,
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="radio"
+                  name={`adam-${item.id}`}
+                  value={value}
+                  checked={choice === value}
+                  onChange={() => setPicked((p) => ({ ...p, [item.id]: value }))}
+                  style={{ accentColor: theme.text.accent, width: 18, height: 18, flex: "none", marginTop: 3 }}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+            <p
+              aria-live="polite"
+              style={{
+                ...theme.font.subtext,
+                margin: "4px 0 0",
+                color: choice ? (ok ? theme.text.success : theme.text.danger) : theme.text.secondary,
+              }}
+            >
+              {choice ? `${ok ? "정답입니다." : "오답입니다."} ${item.explain}` : "아직 답을 고르지 않았습니다."}
+            </p>
+          </fieldset>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <Page
       title="Adam 쉽게 보기 (Kingma·Ba, 2014)"
-      summary="Adam은 기울기의 최근 평균(방향)을 기울기 제곱의 최근 평균의 제곱근(평소 크기)으로 나눠서, 파라미터마다 걸음 크기를 따로 정합니다. 그래서 한 걸음이 대략 α 이하로 묶입니다."
+      summary="Adam은 기울기의 최근 평균(방향)을 기울기 제곱의 최근 평균의 제곱근(평소 크기)으로 나눠서, 파라미터마다 걸음 크기를 따로 정합니다. 그래서 한 걸음이 대략 α 이하로 묶입니다. 골짜기 경로 실험으로 전체 모습을 보고, 세 실험(편향 보정, 기울기 배율, 드문 기울기)으로 그 안의 계산을 하나씩 확인합니다."
       width="column"
       lang="ko"
     >
@@ -418,6 +974,7 @@ export default function App() {
         items={[
           { label: "한 장면 비유", id: "analogy" },
           { label: "직접 움직여 보기", id: "lab" },
+          { label: "Adam 안을 들여다보기", id: "inside" },
           { label: "기존 방법과 비교", id: "compare" },
           { label: "논문 근거 위치", id: "evidence" },
           { label: "주의: 실험이 보여 주는 것", id: "caution" },
@@ -444,11 +1001,15 @@ export default function App() {
             ["학습률(learning rate, α)", "한 걸음의 기본 크기"],
             ["잡음(noise)", "데이터 일부(미니배치)만 보고 기울기를 구해서 생기는 흔들림"],
             ["편향 보정(bias correction)", "0에서 시작한 기억이 처음에 작게 나오는 것을 바로잡는 일"],
+            ["이동평균(moving average)", "최근 값에 더 큰 비중을 주는 평균"],
+            ["m (방향 기억)", "기울기의 이동평균. 어느 쪽으로 기울었는지 담습니다"],
+            ["v (크기 기억)", "기울기 제곱의 이동평균. 2차 미분이 아닙니다"],
           ]}
         />
         <Text>
-          논문의 기본값은 학습률 α 0.001, β1 0.9, β2 0.999, ε 10^-8입니다 (p.2, 알고리즘 1 캡션). β1은 방향 기억이
-          과거를 얼마나 오래 붙잡는지, β2는 크기 기억이 과거를 얼마나 오래 붙잡는지 정합니다.
+          논문의 기본값은 학습률 α 0.001, β1 0.9, β2 0.999, ε 10^-8입니다 (p.2, 알고리즘 1 캡션). α는 기본 이동
+          규모입니다. β1은 방향 기억(m)이 과거를 얼마나 오래 붙잡는지, β2는 크기 기억(v)이 과거를 얼마나 오래
+          붙잡는지 정합니다. ε는 0으로 나누지 않도록 분모에 더하는 아주 작은 수입니다.
         </Text>
       </Section>
 
@@ -470,6 +1031,48 @@ export default function App() {
           편향 보정을 끄면 첫 걸음이 약 3.16α가 됩니다. 기본값 β1 0.9, β2 0.999에서 기억이 0에서 출발하기 때문입니다.
           보정을 켜면 첫 걸음은 정확히 α입니다. 그래서 Adam은 (1 - β^t)로 나눠 기억을 바로잡습니다 (p.2 §2, p.3 §3).
         </Text>
+        <Text>
+          이 경로 뒤에서 어떤 계산이 일어나는지는 다음 절에서 하나씩 떼어 봅니다.
+        </Text>
+      </Section>
+
+      <Section heading="Adam 안을 들여다보기" id="inside" caption="정해 둔 기울기 열로 계산한 예시 값입니다 (논문 기본값 α, β2, ε 사용)">
+        <Text>
+          Adam은 기울기의 방향을 모으고(m), 기울기의 크기(√v)로 나누어 이동합니다. 아래 세 실험은 정해 둔 기울기
+          열을 그대로 계산합니다. 실제 모델의 학습 성능을 측정하지 않습니다. 골짜기 실험과 달리 α는 논문 기본값
+          0.001입니다. 슬라이더로 바꾼 설정은 예시 값입니다.
+        </Text>
+        <Section heading="처음의 0은 평균을 끌어내립니다" id="inside-bias">
+          <Text>
+            골짜기 실험에서 편향 보정을 끄면 첫 걸음이 약 3.16α였습니다. 그 이유를 여기서 봅니다. 같은 기울기가 계속
+            들어와도 0에서 시작한 평균 m은 처음에 작습니다. 편향 보정은 0에서 시작한 영향을 지웁니다 (p.2, 알고리즘
+            1·§2 / p.3, §3).
+          </Text>
+          <Text>"한 걸음"을 몇 번 누르고, 편향 보정을 껐다 켜며 실선과 점선의 차이를 보십시오.</Text>
+          <BiasLab />
+        </Section>
+        <Section heading="기울기를 키워도 이동량은 비슷합니다" id="inside-scale">
+          <Text>
+            예시 기울기는 매번 (x = 2, y = 0.2)입니다. 1번째부터 5번째 걸음까지 x에만 같은 배율 c를 곱합니다. y의
+            배율은 1입니다. SGD와 Adam의 실제 한 걸음이 어떻게 달라지는지 봅니다 (p.1, 초록 / p.3, §2.1).
+          </Text>
+          <ScaleLab />
+          <Text>
+            SGD의 x 이동량은 c배로 커집니다. Adam의 x 이동량은 거의 그대로입니다. 마지막 절의 첫 질문이 바로 이
+            성질을 묻습니다.
+          </Text>
+        </Section>
+        <Section heading="보정계수와 실제 이동량은 다릅니다" id="inside-coord">
+          <Text>
+            자주 큰 기울기를 받는 A와 드물게 기울기를 받는 B를 비교합니다. A의 기울기는 매번 4입니다. B의 기울기는
+            지정한 간격마다 1이고, 나머지 때에는 0입니다. 두 값은 설명용 예시입니다 (p.2, 알고리즘 1 / p.3, §2.1).
+          </Text>
+          <Text>
+            보정계수 η(파라미터별로 α를 나눠 주는 비율)가 커도, 실제 이동량은 작을 수 있습니다. "보정계수 보기"와
+            "실제 이동량 보기"를 번갈아 눌러 보십시오.
+          </Text>
+          <CoordLab />
+        </Section>
       </Section>
 
       <Section heading="기존 방법과 비교" id="compare">
@@ -490,6 +1093,11 @@ export default function App() {
           AdaGrad는 제곱을 계속 더하므로 걸음이 점점 작아집니다 (논문 밖 설명). 여기서 SGD는 모멘텀(momentum) 없는
           기본형입니다.
         </Text>
+        <Text>
+          AdaGrad가 강한 "드문 기울기"를 Adam이 어떻게 다루는지는 앞 절의 "보정계수와 실제 이동량은 다릅니다" 실험에서
+          파라미터 B로 볼 수 있습니다. B는 기울기가 드물게 와서 √v̂가 작고 보정계수 η가 큽니다. 그래도 실제 이동량은
+          방향 평균 m̂이 함께 정합니다.
+        </Text>
       </Section>
 
       <Section heading="논문 근거 위치" id="evidence">
@@ -499,8 +1107,9 @@ export default function App() {
             ["파라미터마다 걸음 크기를 따로 정함", "p.1"],
             ["AdaGrad와 RMSProp의 장점을 합침", "p.1"],
             ["기본값 α 0.001, β1 0.9, β2 0.999, ε 10^-8", "p.2, 알고리즘 1 캡션"],
+            ["m은 기울기의 이동평균, v는 기울기 제곱의 이동평균 (2차 미분 아님)", "p.2, 알고리즘 1"],
             ["한 걸음이 대략 α 이하, 신뢰 영역", "p.3, §2.1"],
-            ["기울기 크기를 몇 배로 바꿔도 걸음 크기는 그대로", "p.3, §2.1"],
+            ["기울기 크기를 몇 배로 바꿔도 걸음 크기는 그대로 (ε = 0 가정에서 약분)", "p.1 초록, p.3 §2.1"],
             ["0에서 시작한 기억을 (1 - β^t)로 나눠 보정", "p.2 §2, p.3 §3"],
             ["크기 기억은 대각선 성분만 담은 근사", "p.5, §5"],
             ["보정 없이 β2가 1에 가까우면 학습 초반 불안정", "p.8, 그림 4 (VAE)"],
@@ -529,6 +1138,12 @@ export default function App() {
           논문의 실험 그림(그림 1~3)은 모두 학습 손실(training cost)만 비교합니다. 테스트 정확도 비교는 없습니다. CNN에서
           SGD 대비 개선은 저자도 "marginal"(작음)이라고 썼습니다 (p.7).
         </Callout>
+        <Callout lead="이 글의 실험이 말하지 않는 것" tone="warning">
+          골짜기 경로와 세 실험의 그림·표는 모두 예시 값으로 계산한 결과입니다. Adam이 언제나 더 빠르거나 더
+          정확하다는 비교가 아닙니다. 편향 보정은 0에서 시작한 영향만 지우고, 데이터의 다른 편향까지 없애지는
+          않습니다. 배율 불변성은 ε = 0이고 좌표마다 고정된 양의 배율을 곱할 때 정확히 성립합니다. ε {">"} 0이면
+          거의 같을 뿐이고, 좌표를 회전하거나 매 걸음 다른 배율을 쓰는 경우는 보장하지 않습니다.
+        </Callout>
         <Text>
           정리하면 이렇습니다. "학습 손실을 빠르고 안정적으로 줄인다"는 이 논문이 보여 준 것입니다. "모델이 새 데이터에서
           더 잘 맞힌다"는 이 논문이 확인한 것이 아닙니다.
@@ -551,14 +1166,21 @@ export default function App() {
         <Callout lead="답의 근거" tone="success">
           기울기를 몇 배로 바꿔도 평균과 평소 크기가 같은 비율로 바뀌어 지워지므로, 걸음 크기는 기울기 크기에 영향을 받지
           않습니다 (p.3, §2.1). 이 성질은 파라미터마다 따로 성립합니다 (p.1, 초록 "invariant to diagonal rescaling of the
-          gradients"). 그리고 한 걸음은 대략 α 이하로 묶입니다 (p.3, §2.1).
+          gradients"). 그리고 한 걸음은 대략 α 이하로 묶입니다 (p.3, §2.1). "기울기를 키워도 이동량은 비슷합니다"
+          실험에서 c를 바꿔 보면 숫자로 확인할 수 있습니다.
         </Callout>
+        <Text>마지막으로 세 문제를 풀어 보십시오. 답을 고르면 정답 여부와 근거가 바로 나옵니다.</Text>
+        <Quiz />
       </Section>
 
       <Section heading="출처" id="source">
         <Text>
           Diederik P. Kingma, Jimmy Lei Ba. "Adam: A Method for Stochastic Optimization". 2014 (ICLR 2015).
-          https://arxiv.org/abs/1412.6980 (arXiv v9)
+          https://arxiv.org/abs/1412.6980 (arXiv v9, 2017-01-30)
+        </Text>
+        <Text>
+          쪽·절 표기는 arXiv v9 PDF 기준입니다. "Adam 안을 들여다보기"의 세 실험과 마지막 세 문제는 같은 PDF를 근거로
+          만든 복습 실험실을 이 글에 합친 것입니다.
         </Text>
       </Section>
     </Page>
