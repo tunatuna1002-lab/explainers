@@ -6,10 +6,12 @@ import {
   Callout,
   Steps,
   Table,
+  Segmented,
   useGrokTheme,
   useEffect,
   useRef,
   useState,
+  type ReactNode,
 } from "@/components/canvas";
 import { Tex } from "@/components/Tex";
 
@@ -48,13 +50,534 @@ function Widget({ name, title, height, caption }: { name: string; title: string;
   );
 }
 
+/* ---------- 실험실 공통: 숫자 표시, 슬라이더, 버튼 ---------- */
+
+// 실험실 원본(VAE.html)의 계산식을 그대로 옮긴다. 모든 조작값은 예시 값이다.
+const fx = (v: number, d = 2) => (Math.abs(v) < 0.5 * Math.pow(10, -d) ? 0 : v).toFixed(d);
+const gaussian = (x: number, m: number, s: number) => Math.exp(-0.5 * Math.pow((x - m) / s, 2)) / (s * Math.sqrt(2 * Math.PI));
+const klGauss = (m: number, s: number) => Math.max(0, 0.5 * (m * m + s * s - 1 - Math.log(s * s)));
+function normal() {
+  let u = 0;
+  while (u === 0) u = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
+}
+
+interface LabSliderProps {
+  id: string;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}
+
+function LabSlider({ id, label, value, min, max, step, onChange }: LabSliderProps) {
+  const theme = useGrokTheme();
+  const show = fx(value);
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <label
+        htmlFor={id}
+        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between" }}
+      >
+        <span>{label}</span>
+        <output htmlFor={id} style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
+          {show}
+        </output>
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        aria-valuetext={show}
+        onChange={(e) => {
+          const next = Number(e.currentTarget.value);
+          if (Number.isFinite(next)) onChange(Number((Math.round(Math.min(max, Math.max(min, next)) / step) * step).toFixed(4)));
+        }}
+        style={{ width: "100%", minWidth: 0, minHeight: 36, margin: 0, accentColor: theme.text.accent }}
+      />
+    </div>
+  );
+}
+
+function LabButton({ label, onClick, primary }: { label: string; onClick: () => void; primary?: boolean }) {
+  const theme = useGrokTheme();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        ...theme.font.subtext,
+        fontFamily: theme.font.family,
+        color: primary ? theme.text.onPrimary : theme.text.primary,
+        background: primary ? theme.fill.primary : theme.fill.secondary,
+        border: `1px solid ${primary ? theme.fill.primary : theme.border.default}`,
+        borderRadius: theme.radius.md,
+        padding: "8px 14px",
+        minHeight: 36,
+        cursor: "pointer",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function LabCheck({ id, label, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  const theme = useGrokTheme();
+  return (
+    <label htmlFor={id} style={{ ...theme.font.subtext, color: theme.text.primary, display: "inline-flex", alignItems: "center", gap: 8, minHeight: 36 }}>
+      <input id={id} type="checkbox" checked={checked} onChange={(e) => onChange(e.currentTarget.checked)} style={{ width: 18, height: 18, accentColor: theme.text.accent }} />
+      {label}
+    </label>
+  );
+}
+
+function LabBox({ children }: { children: ReactNode }) {
+  const theme = useGrokTheme();
+  return (
+    <div
+      style={{
+        ...theme.font.subtext,
+        fontVariantNumeric: "tabular-nums",
+        background: theme.bg.subtle,
+        border: `1px solid ${theme.border.weak}`,
+        borderRadius: theme.radius.md,
+        padding: "10px 14px",
+        overflowWrap: "anywhere",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ---------- 분포 그림: 이론 곡선, 표본 막대, 기준 분포 ---------- */
+
+const PW = 480;
+const PH = 270;
+
+function DistPlot({
+  m,
+  s,
+  samples = [],
+  show = true,
+  current,
+  reference = false,
+  label,
+}: {
+  m: number;
+  s: number;
+  samples?: number[];
+  show?: boolean;
+  current?: number;
+  reference?: boolean;
+  label: string;
+}) {
+  const theme = useGrokTheme();
+  const qColor = theme.dataviz.categorical[0];
+  const pColor = theme.dataviz.categorical[1];
+  const L = 48, R = 14, T = 31, B = 42, iw = PW - L - R, ih = PH - T - B;
+  let low = reference ? Math.min(-4, m - 4 * s) : m - 4 * s;
+  let high = reference ? Math.max(4, m + 4 * s) : m + 4 * s;
+  for (const z of samples) {
+    low = Math.min(low, z - 0.15 * s);
+    high = Math.max(high, z + 0.15 * s);
+  }
+  if (current !== undefined) {
+    low = Math.min(low, current - 0.15 * s);
+    high = Math.max(high, current + 0.15 * s);
+  }
+  const nbin = 20, binw = (high - low) / nbin, counts = Array(nbin).fill(0) as number[];
+  for (const z of samples) counts[Math.min(nbin - 1, Math.max(0, Math.floor((z - low) / binw)))]++;
+  const densities = counts.map((n) => (samples.length ? n / (samples.length * binw) : 0));
+  const max = Math.max(gaussian(m, m, s), reference ? gaussian(0, 0, 1) : 0, ...densities) * 1.12;
+  const X = (z: number) => L + ((z - low) / (high - low)) * iw;
+  const Y = (v: number) => T + ih - (v / max) * ih;
+  const curve = (mm: number, ss: number) => {
+    let d = "";
+    for (let i = 0; i <= 220; i++) {
+      const z = low + ((high - low) * i) / 220;
+      d += (i ? " L" : "M") + X(z).toFixed(3) + " " + Y(gaussian(z, mm, ss)).toFixed(3);
+    }
+    return d;
+  };
+  const txt = { ...theme.font.caption, fill: theme.text.primary, fontSize: 12 };
+  return (
+    <svg viewBox={`0 0 ${PW} ${PH}`} role="img" aria-label={label} style={{ display: "block", width: "100%", height: "auto", overflow: "visible" }}>
+      <desc>
+        {reference
+          ? `정규분포 q의 평균 ${fx(m)} 표준편차 ${fx(s)}, 기준 분포 p의 평균 0 표준편차 1.`
+          : `표본 ${samples.length}개. 정규분포의 평균 ${fx(m)} 표준편차 ${fx(s)}.`}
+      </desc>
+      <text x={0} y={15} style={txt}>
+        확률밀도
+      </text>
+      {[0, 1, 2].map((i) => {
+        const val = (max * i) / 2, y = Y(val);
+        return (
+          <g key={i}>
+            <line x1={L} y1={y} x2={PW - R} y2={y} stroke={theme.border.default} />
+            <text x={L - 7} y={y + 4} textAnchor="end" style={txt}>
+              {fx(val, 2)}
+            </text>
+          </g>
+        );
+      })}
+      <line x1={L} y1={T} x2={L} y2={T + ih} stroke={theme.border.default} />
+      {[0, 1, 2, 3].map((i) => {
+        const z = low + ((high - low) * i) / 3;
+        return (
+          <text key={i} x={X(z)} y={T + ih + 19} textAnchor={i === 0 ? "start" : i === 3 ? "end" : "middle"} style={txt}>
+            {fx(z, 1)}
+          </text>
+        );
+      })}
+      <text x={PW - R} y={PH - 3} textAnchor="end" style={txt}>
+        잠재값 z (단위 없음)
+      </text>
+      {samples.length
+        ? densities.map((d, i) =>
+            d ? (
+              <rect key={i} x={X(low + i * binw) + 0.5} y={Y(d)} width={Math.max(0, iw / nbin - 1)} height={Y(0) - Y(d)} fill={qColor} fillOpacity={0.24} />
+            ) : null,
+          )
+        : null}
+      {show ? <path d={curve(m, s)} fill="none" stroke={qColor} strokeWidth={2.5} /> : null}
+      {reference ? <path d={curve(0, 1)} fill="none" stroke={pColor} strokeWidth={2} strokeDasharray="6 4" /> : null}
+      {current !== undefined ? <circle cx={X(current)} cy={Y(0) - 4} r={4} fill={qColor} /> : null}
+    </svg>
+  );
+}
+
+function Legend({ items }: { items: { label: string; color: string; kind: "line" | "dash" | "bar" }[] }) {
+  const theme = useGrokTheme();
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", ...theme.font.caption, color: theme.text.secondary }}>
+      {items.map((it) => (
+        <span key={it.label} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <svg width={20} height={10} aria-hidden="true">
+            {it.kind === "bar" ? (
+              <rect x={0} y={0} width={20} height={10} fill={it.color} fillOpacity={0.3} />
+            ) : (
+              <line x1={0} y1={5} x2={20} y2={5} stroke={it.color} strokeWidth={2.5} strokeDasharray={it.kind === "dash" ? "5 3" : undefined} />
+            )}
+          </svg>
+          {it.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+const stack = { display: "flex", flexDirection: "column" as const, gap: 12 };
+const row = { display: "flex", flexWrap: "wrap" as const, gap: 8, alignItems: "center" };
+const twoCol = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px 20px" };
+
+/* ---------- 실험 1: 같은 난수, 달라지는 분포 (p.5, §2.4) ---------- */
+
+function SamplingLab() {
+  const theme = useGrokTheme();
+  const [mu, setMu] = useState(1);
+  const [sigma, setSigma] = useState(2);
+  const [eps, setEps] = useState<number[]>([]);
+  const [last, setLast] = useState(0.5);
+  const [has, setHas] = useState(false);
+  const [theory, setTheory] = useState(true);
+  const z = mu + sigma * last;
+  const draw = (n: number) => {
+    const next: number[] = [];
+    for (let i = 0; i < n; i++) next.push(normal());
+    setEps((prev) => [...prev, ...next].slice(-600));
+    setLast(next[next.length - 1]);
+    setHas(true);
+  };
+  return (
+    <div style={stack}>
+      <div style={twoCol}>
+        <LabSlider id="vae-s-mu" label="μ (평균)" value={mu} min={-3} max={3} step={0.05} onChange={setMu} />
+        <LabSlider id="vae-s-sigma" label="σ (표준편차, 흩어짐)" value={sigma} min={0.2} max={3} step={0.05} onChange={setSigma} />
+      </div>
+      <div style={row}>
+        <LabButton label="ε 뽑기" primary onClick={() => draw(1)} />
+        <LabButton label="50개 뽑기" onClick={() => draw(50)} />
+        <LabButton
+          label="표본 비우기"
+          onClick={() => {
+            setEps([]);
+            setLast(0.5);
+            setHas(false);
+          }}
+        />
+        <LabCheck id="vae-s-theory" label="이론 분포 곡선 보기" checked={theory} onChange={setTheory} />
+      </div>
+      <LabBox>
+        <strong style={{ ...theme.font.body1 }}>z = μ + σ × ε</strong>
+        <span>
+          {fx(mu)} + {fx(sigma)} × ({fx(last, 4)}) ≈ {fx(z, 4)}
+        </span>
+        <span style={{ color: theme.text.secondary }}>ε는 평균 0, 표준편차 1인 정규분포 N(0, 1)에서 뽑은 난수입니다(p.5, §2.4).</span>
+      </LabBox>
+      <DistPlot m={mu} s={sigma} samples={eps.map((e) => mu + sigma * e)} show={theory} current={z} label="선택한 정규분포와 뽑은 표본의 밀도" />
+      <Legend
+        items={[
+          { label: "이론 분포", color: theme.dataviz.categorical[0], kind: "line" },
+          { label: "뽑은 표본의 밀도", color: theme.dataviz.categorical[0], kind: "bar" },
+        ]}
+      />
+      <Text>
+        저장한 표본 {eps.length}개(최근 최대 600개).{" "}
+        {has ? `마지막 ε = ${fx(last, 4)}.` : "처음 ε = 0.5는 고정 예시이며 표본에 넣지 않습니다."} 슬라이더를 움직이면 이미 뽑은 ε는 그대로 두고 모든 z를 다시 계산합니다. 막대 높이 = 구간의 표본 수 ÷ 전체 표본 수 ÷ 구간 너비입니다. 점은 마지막으로 계산한 z입니다.
+      </Text>
+    </div>
+  );
+}
+
+/* ---------- 실험 2: 기울기가 돌아가는 길 (pp.3-5, §2.2-2.4) ---------- */
+
+type DrawMode = "direct" | "reparam";
+const DRAW_OPTIONS = [
+  { value: "direct" as const, label: "z를 바로 뽑기" },
+  { value: "reparam" as const, label: "ε를 뽑고 z 계산" },
+];
+
+function GradientLab() {
+  const theme = useGrokTheme();
+  const [mode, setMode] = useState<DrawMode>("reparam");
+  const [mu, setMu] = useState(1);
+  const [sigma, setSigma] = useState(2);
+  const [e, setE] = useState(0.5);
+  const reparam = mode === "reparam";
+  const z = mu + sigma * e;
+  const good = theme.text.success;
+  const bad = theme.text.danger;
+  const W = 360, mid = W / 2, bw = 240, left = (W - bw) / 2;
+  const ys = [31, 119, 207, 295];
+  const rows: [string, string][] = [
+    ["인코더가 계산한 분포", `μ = ${fx(mu)}   σ = ${fx(sigma)}`],
+    reparam ? ["미분 가능한 계산", "z = μ + σ·ε"] : ["미분 규칙 없는 추출기", "z ~ N(μ, σ²)"],
+    ["앞으로 계산한 잠재값", `z = ${fx(z, 4)}`],
+    ["예시 함수", `f(z) = z² = ${fx(z * z, 4)}`],
+  ];
+  const caption = reparam
+    ? "이어짐: z를 μ와 σ의 식으로 계산하므로 기울기가 전달됩니다. ε는 이번 계산에서 고정하지만, 다음 추출 때는 다시 바뀝니다."
+    : "이 경로는 막힘: z와 f는 계산할 수 있습니다. 다만 미분 규칙 없는 추출기를 통과해 μ와 σ로 역전파할 수는 없습니다.";
+  const txt = { ...theme.font.caption, fill: theme.text.primary, fontSize: 12 };
+  const arrow = (x: number, from: number, to: number, color: string, dash: boolean, key: string) => {
+    const sign = to > from ? 1 : -1;
+    return (
+      <g key={key}>
+        <line x1={x} y1={from} x2={x} y2={to} stroke={color} strokeWidth={2} strokeDasharray={dash ? "4 4" : undefined} />
+        <path d={`M ${x - 4} ${to - sign * 6} L ${x} ${to} L ${x + 4} ${to - sign * 6}`} fill="none" stroke={color} strokeWidth={2} />
+      </g>
+    );
+  };
+  return (
+    <div style={stack}>
+      <Segmented options={DRAW_OPTIONS} value={mode} onChange={setMode} />
+      <div style={twoCol}>
+        <LabSlider id="vae-g-mu" label="μ (평균)" value={mu} min={-3} max={3} step={0.05} onChange={setMu} />
+        <LabSlider id="vae-g-sigma" label="σ (표준편차)" value={sigma} min={0.2} max={3} step={0.05} onChange={setSigma} />
+      </div>
+      <div style={row}>
+        <LabButton label="ε 다시 뽑기" onClick={() => setE(normal())} />
+        <LabButton label="ε = 0.5 예시" onClick={() => setE(0.5)} />
+      </div>
+      <LabBox>
+        <span>
+          ε = {fx(e, 4)} → z = {fx(z, 4)} → f(z) = z² = {fx(z * z, 4)}
+        </span>
+        <span style={{ color: theme.text.secondary }}>
+          {reparam ? "ε를 고정한 미분: ∂z/∂μ = 1, ∂z/∂σ = ε" : "추출기를 미분 규칙이 없는 연산으로 취급합니다."}
+        </span>
+        <span style={{ color: reparam ? good : bad }}>
+          f의 μ 기울기: {reparam ? `2z = ${fx(2 * z, 4)}` : "이 경로로 미정의"}
+        </span>
+        <span style={{ color: reparam ? good : bad }}>
+          f의 σ 기울기: {reparam ? `2zε = ${fx(2 * z * e, 4)}` : "이 경로로 미정의"}
+        </span>
+      </LabBox>
+      <figure style={{ margin: 0 }}>
+        <svg viewBox={`0 0 ${W} 350`} role="img" aria-label="순전파와 역전파 계산 경로" style={{ display: "block", width: "100%", maxWidth: 420, height: "auto", margin: "0 auto" }}>
+          <desc>{caption}</desc>
+          <text x={13} y={15} style={txt}>
+            순전파 ↓
+          </text>
+          <text x={W - 13} y={15} textAnchor="end" style={txt}>
+            역전파 ↑
+          </text>
+          {[0, 1, 2].map((i) => (
+            <g key={i}>
+              {arrow(mid - 22, ys[i] + 42, ys[i + 1] - 4, theme.text.tertiary, false, `f${i}`)}
+              {arrow(mid + 22, ys[i + 1] - 4, ys[i] + 46, i === 0 && !reparam ? bad : good, i === 0 && !reparam, `b${i}`)}
+            </g>
+          ))}
+          {!reparam ? (
+            <text x={mid + 39} y={98} style={{ ...txt, fill: bad, fontSize: 16 }}>
+              ×
+            </text>
+          ) : null}
+          {rows.map((r, i) => (
+            <g key={r[0]}>
+              <rect x={left} y={ys[i]} width={bw} height={42} rx={8} fill={theme.bg.subtle} stroke={theme.border.default} />
+              <text x={mid} y={ys[i] + 16} textAnchor="middle" style={txt}>
+                {r[0]}
+              </text>
+              <text x={mid} y={ys[i] + 33} textAnchor="middle" style={txt}>
+                {r[1]}
+              </text>
+            </g>
+          ))}
+        </svg>
+        <figcaption style={{ ...theme.font.caption, color: theme.text.secondary, marginTop: 4 }}>{caption}</figcaption>
+      </figure>
+    </div>
+  );
+}
+
+/* ---------- 실험 3: KL이 0이 되는 자리 (부록 B, pp.10-11) ---------- */
+
+const KL_PRESETS = [
+  { label: "μ = 0, σ = 1 맞추기", m: 0, s: 1, primary: true },
+  { label: "μ = 1, σ = 0.5 예시", m: 1, s: 0.5 },
+  { label: "μ = 1, σ = 2 예시", m: 1, s: 2 },
+];
+
+function GaussianKLLab() {
+  const theme = useGrokTheme();
+  const [mu, setMu] = useState(1);
+  const [sigma, setSigma] = useState(2);
+  const [neg, setNeg] = useState(false);
+  const v = klGauss(mu, sigma);
+  const m2 = mu * mu, s2 = sigma * sigma;
+  return (
+    <div style={stack}>
+      <div style={twoCol}>
+        <LabSlider id="vae-k-mu" label="μ (q의 평균)" value={mu} min={-3} max={3} step={0.05} onChange={setMu} />
+        <LabSlider id="vae-k-sigma" label="σ (q의 표준편차)" value={sigma} min={0.2} max={3} step={0.05} onChange={setSigma} />
+      </div>
+      <div style={row}>
+        {KL_PRESETS.map((p) => (
+          <LabButton
+            key={p.label}
+            label={p.label}
+            primary={p.primary}
+            onClick={() => {
+              setMu(p.m);
+              setSigma(p.s);
+            }}
+          />
+        ))}
+        <LabCheck id="vae-k-neg" label="원문의 −KL 값도 보기" checked={neg} onChange={setNeg} />
+      </div>
+      <LabBox>
+        <span>
+          KL(q ‖ p) = <strong style={{ ...theme.font.body1 }}>{fx(v, 6)}</strong> nat (자연로그 기준)
+        </span>
+        {neg ? <span>원문의 −KL = {fx(-v, 6)} nat</span> : null}
+        <span style={{ color: theme.text.secondary }}>
+          KL = ½(μ² + σ² − 1 − ln σ²) = ½ × ({fx(m2, 4)} + {fx(s2, 4)} − 1 − ln {fx(s2, 4)}) ≈ {fx(v, 6)}
+        </span>
+      </LabBox>
+      <DistPlot m={mu} s={sigma} reference label="근사 사후분포 q와 표준정규 기준 분포 p의 비교" />
+      <Legend
+        items={[
+          { label: "q = N(μ, σ²)", color: theme.dataviz.categorical[0], kind: "line" },
+          { label: "p = N(0, 1)", color: theme.dataviz.categorical[1], kind: "dash" },
+        ]}
+      />
+      <Text>
+        {mu === 0 && sigma === 1
+          ? "두 분포가 정확히 같습니다. KL = 0입니다."
+          : `μ = ${fx(mu)}, σ = ${fx(sigma)}일 때 KL은 ${fx(v, 6)} nat입니다.`}{" "}
+        곡선의 세로축은 확률밀도입니다. 두 곡선 사이의 면적을 KL로 읽으면 안 됩니다.
+      </Text>
+    </div>
+  );
+}
+
+/* ---------- 확인 퀴즈 ---------- */
+
+const QUIZ = [
+  {
+    q: "1. 가우시안 인코더가 입력 x를 보고 계산하는 것은 무엇입니까?",
+    a: ["항상 같은 잠재값 z 하나", "잠재 분포의 평균 μ와 표준편차 σ", "입력과 관계없는 고정 난수 ε"],
+    correct: 1,
+    why: "인코더는 입력별 분포의 μ와 σ를 계산하고, 그 분포에서 z를 뽑습니다(p.5, §3).",
+  },
+  {
+    q: "2. 재매개변수화가 바꾸는 것은 무엇입니까?",
+    a: ["같은 분포의 값을 만드는 계산 방식", "무작위 추출을 완전히 없애는 것", "모든 표본 z를 평균 μ로 고정하는 것"],
+    correct: 0,
+    why: "z의 분포는 그대로입니다. ε를 먼저 뽑은 뒤 μ + σ·ε를 계산합니다(p.5, §2.4).",
+  },
+  {
+    q: "3. q = N(μ, σ²), p = N(0, 1)일 때 KL이 0이 되는 조건은 무엇입니까?",
+    a: ["μ = 0, σ = 2", "μ = 0, σ = 1", "μ = 1, σ = 1"],
+    correct: 1,
+    why: "평균과 표준편차가 모두 같아져 두 분포가 일치합니다(p.11, 부록 B).",
+  },
+];
+
+function Quiz() {
+  const theme = useGrokTheme();
+  const [picked, setPicked] = useState<(number | null)[]>(QUIZ.map(() => null));
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {QUIZ.map((q, i) => {
+        const p = picked[i];
+        const ok = p === q.correct;
+        return (
+          <fieldset key={q.q} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+            <legend style={{ ...theme.font.body1, color: theme.text.primary, fontWeight: 600, padding: 0, marginBottom: 8 }}>{q.q}</legend>
+            <div style={{ display: "grid", gap: 6 }}>
+              {q.a.map((a, j) => (
+                <button
+                  key={a}
+                  type="button"
+                  aria-pressed={p === j}
+                  onClick={() => setPicked((prev) => prev.map((v, k) => (k === i ? j : v)))}
+                  style={{
+                    ...theme.font.subtext,
+                    fontFamily: theme.font.family,
+                    textAlign: "left",
+                    color: theme.text.primary,
+                    background: p === j ? theme.fill.accentSubtle : theme.fill.secondary,
+                    border: `1px solid ${p === j ? theme.text.accent : theme.border.default}`,
+                    borderRadius: theme.radius.md,
+                    padding: "8px 12px",
+                    minHeight: 40,
+                    cursor: "pointer",
+                  }}
+                >
+                  {a}
+                </button>
+              ))}
+            </div>
+            <p aria-live="polite" style={{ ...theme.font.subtext, margin: "8px 0 0", minHeight: 24, color: p === null ? theme.text.tertiary : ok ? theme.text.success : theme.text.danger }}>
+              {p === null ? "아직 답을 고르지 않았습니다." : (ok ? "정답입니다. " : "다시 생각해 보십시오. ") + q.why}
+            </p>
+          </fieldset>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ---------- 본문 ---------- */
 
 export default function App() {
   return (
     <Page
       title="Auto-Encoding Variational Bayes 쉽게 보기: 재매개변수화, MCMC, 주변우도"
-      summary="사후분포의 분모 p(x)는 계산할 수 없는 적분입니다. 그래서 이 논문은 log p(x) 대신 그 아래에 있는 하한 L을 키우고, 노이즈를 모델 밖으로 빼는 재매개변수화로 L의 기울기를 구합니다. 인코더가 사진마다 한 번에 분포를 내므로, 데이터마다 MCMC를 돌리지 않고 미니배치로 학습합니다."
+      summary="사후분포의 분모 p(x)는 계산할 수 없는 적분입니다. 그래서 이 논문은 log p(x) 대신 그 아래에 있는 하한 L을 키우고, 노이즈를 모델 밖으로 빼는 재매개변수화(z = μ + σ × ε)로 L의 기울기를 구합니다. 인코더가 사진마다 한 번에 분포를 내므로, 데이터마다 MCMC를 돌리지 않고 미니배치로 학습합니다. 세 실험(같은 난수로 z 만들기, 기울기가 돌아가는 길, KL이 0이 되는 자리)과 확인 퀴즈로 직접 확인할 수 있습니다."
       width="column"
       lang="ko"
     >
@@ -68,8 +591,10 @@ export default function App() {
           { label: "베이즈 정리", id: "bayes" },
           { label: "경사상승법과 경사하강법", id: "ascent" },
           { label: "하한 L과 논문의 연결", id: "elbo" },
+          { label: "기울기가 돌아가는 길", id: "gradient" },
           { label: "KL 발산", id: "kl" },
           { label: "한눈에 보기", id: "map" },
+          { label: "확인 퀴즈", id: "quiz" },
           { label: "공부하며 바로잡은 내용", id: "fixes" },
           { label: "출처", id: "refs" },
         ]}
@@ -94,7 +619,14 @@ export default function App() {
           실제 잠재 변수는 사람이 알아보는 스케치가 아니라 숫자 묶음입니다. 흩어짐도 사람이 정하지 않고 인코더가 사진마다 스스로 냅니다(§3, p.5).
         </Callout>
         <Text>
-          아래 위젯에서 흩어짐을 바꿔 보십시오. 흩어짐이 작으면 → 스케치 후보가 평균 근처에 모입니다 → 다시 그린 그림이 원본과 비슷합니다.
+          "평균 + 흩어짐 × 표준 주사위"를 수식으로 쓰면 z = μ + σ × ε입니다. 논문은 1차원 가우시안 N(μ, σ²)을 예로 듭니다. ε는 N(0, 1)에서 뽑습니다(p.5, §2.4). μ는 분포의 위치를, σ는 퍼짐을 정합니다.
+        </Text>
+        <Callout lead="실험 1. 같은 난수, 달라지는 분포">
+          "50개 뽑기"를 몇 번 누른 뒤 μ와 σ를 움직여 보십시오. 뽑아 둔 ε는 바뀌지 않고 계산만 다시 합니다. 그래도 표본 막대는 새 분포 모양을 따라갑니다. 무작위성은 ε가 맡고, μ와 σ는 계산만 맡습니다. 모든 조작값은 예시입니다.
+        </Callout>
+        <SamplingLab />
+        <Text>
+          이제 같은 생각을 사진에 적용해 보십시오. 아래 위젯에서 흩어짐을 바꿔 보십시오. 흩어짐이 작으면 → 스케치 후보가 평균 근처에 모입니다 → 다시 그린 그림이 원본과 비슷합니다. 이 계산식이 왜 기울기를 살리는지는 "기울기가 돌아가는 길" 절에서 봅니다.
         </Text>
         <Widget name="sigma" title="흩어짐과 재구성" height={760} caption="디코더는 학습된 신경망이 아니라 장난감 규칙입니다. 점수와 분포는 예시입니다." />
         <Table
@@ -210,6 +742,9 @@ export default function App() {
         <Text>
           넓이 그림으로도 확인해 보십시오. 두 우도를 같게 맞추면 → 사진 x는 어느 스케치였는지 단서가 되지 못합니다 → "스케치가 A일 확률"의 사후 p(A|x)가 사전 p(A)와 같아집니다.
         </Text>
+        <Text>
+          그림 읽는 법: 기둥 너비는 사전, 진한 칸 높이는 우도입니다. 사후는 진한 칸만 모았을 때 A와 B가 차지하는 비율입니다. 예: 사전 0.70에 두 우도를 0.46으로 맞추면, 1000장 중 진한 칸은 A 322장, B 138장입니다. p(A|x) = 322 ÷ 460 = 0.700이라 사전 0.70과 같습니다(예시, 계산으로 확인). 위젯은 A와 B의 사후를 두 줄로 나눠 쓰고 옆에 사전을 함께 보여 줍니다.
+        </Text>
         <Widget name="bayesarea" title="베이즈 넓이 그림" height={560} />
         <Text>
           분자 p(x|z)p(z)는 디코더와 사전분포로 바로 계산됩니다. 분모 p(x)는 모든 스케치를 더해야 해서 막힙니다. 그래서 저자는 p(z|x)를 인코더 q(z|x)로 근사합니다(§2.1, p.3).
@@ -271,6 +806,26 @@ export default function App() {
         </Text>
       </Section>
 
+      <Section heading="기울기가 돌아가는 길" id="gradient">
+        <Text>
+          알고리즘 1은 미니배치로 L의 기울기를 구해 인코더 값 φ와 디코더 값 θ를 고칩니다(§2.3, p.4). 그런데 L 안에는 "z를 뽑는다"는 무작위 단계가 있습니다. 뽑기에는 미분 규칙이 없습니다. 그래서 뽑은 값에서 인코더의 μ와 σ로 돌아가는 길이 끊길 수 있습니다.
+        </Text>
+        <Steps
+          steps={[
+            { title: "바로 뽑기", detail: "z ~ N(μ, σ²)에서 z를 바로 뽑습니다. z와 f(z)는 계산됩니다. 하지만 추출기를 거꾸로 지나 μ와 σ로 역전파할 수는 없습니다." },
+            { title: "ε를 뽑고 z 계산", detail: "ε를 먼저 뽑고 z = μ + σ × ε를 계산합니다. z가 μ와 σ의 식이 되어 ∂z/∂μ = 1, ∂z/∂σ = ε가 됩니다(p.5, §2.4)." },
+            { title: "분포는 그대로", detail: "두 방식은 같은 ε를 쓰면 같은 z를 만듭니다. 바뀌는 것은 계산 순서뿐입니다." },
+          ]}
+        />
+        <Callout lead="실험 2. 기울기가 돌아가는 길">
+          두 방식을 번갈아 눌러 보십시오. f(z) = z²는 미분을 보기 위한 예시 함수입니다(논문 밖). 실제 VAE에서는 이 자리에 디코더의 재구성 점수 log p(x|z)가 들어갑니다(식 10, p.5).
+        </Callout>
+        <GradientLab />
+        <Callout lead="막힘의 범위" tone="warning">
+          여기서 막히는 것은 미분 규칙이 없는 추출기를 거치는 이 역전파 경로뿐입니다. 기울기를 어림하는 다른 방법은 있습니다. 논문은 흔한 몬테카를로 기울기 추정량(∇log q를 쓰는 방법)이 분산이 매우 커서 쓰기 어렵다고 적습니다(§2.2, p.3). 재매개변수화는 그 대안입니다(§2.4, p.4-5).
+        </Callout>
+      </Section>
+
       <Section heading="KL 발산" id="kl">
         <Text>
           KL 발산(KL divergence)은 분포 q를 쓸 때, 진짜 분포 p와 비교해 평균적으로 얼마나 어긋나는지를 재는 값입니다. VAE에서는 인코더 q(z|x)가 참 사후분포를 얼마나 잘 흉내 내는지 재는 도구로 쓰입니다(§2.1·2.2, p.3).
@@ -306,15 +861,16 @@ export default function App() {
           ]}
         />
         <Text>
-          식 3의 KL은 두 분포가 모두 가우시안이라서 적분 없이 식 하나로 계산됩니다(부록 B, p.10-11). μ와 σ는 인코더가 차원 j마다 낸 평균과 흩어짐입니다.
+          식 3의 KL은 두 분포가 모두 가우시안이라서 적분 없이 식 하나로 계산됩니다(부록 B, p.10-11). μ와 σ는 인코더가 차원 j마다 낸 평균과 흩어짐(표준편차)입니다. J는 잠재 변수의 차원 수입니다. 원문 식의 왼쪽은 KL이 아니라 −KL입니다.
         </Text>
         <Tex display>{"-D_{KL} = \\frac{1}{2} \\sum_{j=1}^{J} \\left( 1 + \\log \\sigma_j^2 - \\mu_j^2 - \\sigma_j^2 \\right)"}</Tex>
-        <Steps
-          steps={[
-            { title: "μ = 0, σ = 1이면 KL = 0", detail: "괄호 안이 1 + 0 − 0 − 1 = 0입니다. 인코더가 사전분포 N(0, 1)과 같아진 경우입니다." },
-            { title: "μ = 1, σ = 0.5이면 KL ≈ 0.818", detail: "한 차원 예시 값, 계산으로 확인. 평균이 0에서 멀고 흩어짐이 1보다 작을수록 벌점이 커집니다." },
-          ]}
-        />
+        <Text>
+          한 차원(J = 1)이면 KL = ½(μ² + σ² − 1 − ln σ²)입니다. μ = 0, σ = 1이면 괄호 안이 1 + 0 − 0 − 1 = 0이라 KL = 0입니다. 인코더가 사전분포 N(0, 1)과 같아진 경우입니다. μ = 1, σ = 0.5이면 KL ≈ 0.818입니다(예시 값, 계산으로 확인). 평균이 0에서 멀수록, 흩어짐이 1에서 멀수록 벌점이 커집니다.
+        </Text>
+        <Callout lead="실험 3. KL이 0이 되는 자리">
+          위 두 예시는 버튼으로 바로 불러올 수 있습니다. q는 입력을 보고 추측한 잠재 분포, p는 입력을 보기 전에 정한 사전분포 N(0, 1)입니다. 실선(q)이 점선(p)과 완전히 겹치는 자리에서만 KL이 0이 됩니다.
+        </Callout>
+        <GaussianKLLab />
         <Callout lead="정리" tone="info">
           계산할 수 없는 KL(식 1)은 하한의 간격이 되고, 계산할 수 있는 KL(식 3)은 인코더를 사전분포 쪽으로 당기는 벌점이 됩니다.
         </Callout>
@@ -328,6 +884,11 @@ export default function App() {
         </Callout>
       </Section>
 
+      <Section heading="확인 퀴즈" id="quiz">
+        <Text>보기를 고르면 정답 여부와 이유가 나옵니다. 위 실험의 가우시안 예시를 기준으로 답하십시오.</Text>
+        <Quiz />
+      </Section>
+
       <Section heading="공부하며 바로잡은 내용" id="fixes">
         <Table
           columns={["처음 표현 또는 이해", "바로잡은 내용"]}
@@ -337,6 +898,7 @@ export default function App() {
             ["차원을 늘리면 정보가 의미 없어진다", "정보는 남습니다. 잡음 차원이 신호를 거리 계산 속에 묻을 뿐입니다."],
             ["사후가 사전과 같아진다 (대상이 빠짐)", "\"스케치가 A일 확률\"의 사전 p(A)와 사후 p(A|x)가 같아진다는 뜻입니다."],
             ["MNIST L이 도달하는 최댓값은 0", "0은 넘을 수 없는 선이지, 실제로 도달하는 값이 아닙니다."],
+            ["넓이 그림의 사후 표시 0.700 / 0.300이 사전과 다르다", "슬래시는 나눗셈이 아니라 A와 B의 사후를 나란히 쓴 것이었습니다. p(A|x) = 0.700은 사전 0.70과 같습니다. 위젯 표기를 두 줄로 바꿨습니다."],
           ]}
         />
       </Section>
@@ -345,7 +907,7 @@ export default function App() {
         <Text>
           Diederik P. Kingma, Max Welling. Auto-Encoding Variational Bayes. 2013. arXiv:1312.6114 (v11, 2022). https://arxiv.org/abs/1312.6114
         </Text>
-        <Text>쪽 번호와 절 번호는 arXiv v11 기준입니다. 위젯의 분포와 숫자는 설명을 위해 만든 예시이며 논문의 실험값이 아닙니다. 위젯은 Claude 앱에서 공부하며 만든 그림을 그대로 옮겼습니다.</Text>
+        <Text>쪽 번호와 절 번호는 arXiv v11 기준입니다. 위젯의 분포와 숫자는 설명을 위해 만든 예시이며 논문의 실험값이 아닙니다. 위젯은 Claude 앱에서 공부하며 만든 그림을 그대로 옮겼습니다. 세 실험(같은 난수, 기울기가 돌아가는 길, KL이 0이 되는 자리)과 확인 퀴즈는 ChatGPT에서 만든 복습 실험실을 이 사이트 부품으로 다시 만들었고, 쓰인 계산식은 원본과 같습니다. 실험의 조작값은 모두 예시이며 실제 모델을 학습하지 않습니다.</Text>
       </Section>
     </Page>
   );
