@@ -10,6 +10,7 @@ import {
   Properties,
   Segmented,
   Diagram,
+  useGrokTheme,
   useMemo,
   useState,
 } from "@/components/canvas";
@@ -144,11 +145,388 @@ function ActivationLab() {
   );
 }
 
+// ---- 복습실 위젯 (잔차 합산, 표 2 비교, 차원 맞추기, 확인 퀴즈) ----
+
+const fmtN = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2));
+const signed = (n: number) => (n > 0 ? "+" + fmtN(n) : n < 0 ? "−" + fmtN(-n) : "0");
+
+interface SliderProps {
+  id: string;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  show: string;
+  onChange: (v: number) => void;
+}
+
+function Slider({ id, label, value, min, max, step, show, onChange }: SliderProps) {
+  const theme = useGrokTheme();
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <label
+        htmlFor={id}
+        style={{ ...theme.font.subtext, color: theme.text.secondary, display: "flex", justifyContent: "space-between" }}
+      >
+        <span>{label}</span>
+        <output htmlFor={id} style={{ color: theme.text.primary, fontVariantNumeric: "tabular-nums" }}>
+          {show}
+        </output>
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        aria-valuetext={show}
+        onChange={(e) => {
+          const next = Number(e.currentTarget.value);
+          if (Number.isFinite(next)) onChange(Math.min(max, Math.max(min, next)));
+        }}
+        style={{ width: "100%", minWidth: 0, minHeight: 36, margin: 0, accentColor: theme.text.accent }}
+      />
+    </div>
+  );
+}
+
+function SmallButton({ onClick, children }: { onClick: () => void; children: string }) {
+  const theme = useGrokTheme();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        font: "inherit",
+        ...theme.font.subtext,
+        color: theme.text.primary,
+        background: theme.bg.base,
+        border: `1px solid ${theme.border.default}`,
+        borderRadius: theme.radius.md,
+        padding: "8px 12px",
+        minHeight: 40,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+type OnOff = "on" | "off";
+const SHORTCUT_OPTIONS = [
+  { value: "on" as const, label: "지름길 켜기" },
+  { value: "off" as const, label: "지름길 끄기" },
+];
+
+// 원 복습실 ① 잔차 합산. x는 앞 블록 ReLU 출력이라 0 이상으로 둔다. 모든 숫자는 예시.
+function ResidualSumLab() {
+  const theme = useGrokTheme();
+  const [x, setX] = useState(5);
+  const [f, setF] = useState(2);
+  const [sc, setSc] = useState<OnOff>("on");
+  const on = sc === "on";
+  const s = on ? x : 0;
+  const y = f + s;
+  const z = Math.max(0, y);
+  const formula =
+    (on ? `y = F(x) + x = ${fmtN(f)} + ${fmtN(x)}` : `지름길 없음: y = F(x) = ${fmtN(f)}`) +
+    ` = ${fmtN(y)}, ReLU 뒤 출력 = max(0, ${fmtN(y)}) = ${fmtN(z)}`;
+  const note =
+    on && f === 0
+      ? `F(x) = 0입니다. 지름길이 입력을 그대로 보냅니다. y = x = ${fmtN(x)}이고 ReLU 뒤에도 같습니다. 이것이 항등 매핑입니다.`
+      : on
+        ? `지름길은 입력 ${fmtN(x)}을 보존하고, 잔차 ${signed(f)}를 더합니다. "F(x)를 0으로"를 눌러 비교해 보십시오.`
+        : "지름길을 끄면 합산 직후 값은 F(x)뿐입니다. 입력을 그대로 보내는 경로가 없습니다. 항등 매핑을 만들려면 층들이 F(x) = x를 직접 배워야 합니다.";
+  const arrow = theme.text.tertiary;
+  const skip = theme.text.accent;
+  const ink = theme.text.primary;
+  return (
+    <>
+      <Callout lead="지금 보고 있는 것" tone={on ? "info" : "warning"}>
+        {note}
+      </Callout>
+      <Slider id="rn-x" label="입력 x (예시)" value={x} min={0} max={10} step={1} show={fmtN(x)} onChange={setX} />
+      <Slider id="rn-f" label="잔차 F(x), 곧 더할 변화량 (예시)" value={f} min={-5} max={5} step={1} show={signed(f)} onChange={setF} />
+      <Segmented options={SHORTCUT_OPTIONS} value={sc} onChange={setSc} />
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <SmallButton onClick={() => setF(0)}>F(x)를 0으로</SmallButton>
+        <SmallButton
+          onClick={() => {
+            setX(5);
+            setF(2);
+            setSc("on");
+          }}
+        >
+          처음으로
+        </SmallButton>
+      </div>
+      <div style={{ border: `1px solid ${theme.border.weak}`, borderRadius: theme.radius.lg, background: theme.bg.subtle }}>
+        <svg viewBox="0 0 560 245" width="100%" role="img" aria-label={`입력 ${x}, 잔차 ${f}, 지름길 값 ${s}, 합 ${y}, ReLU 뒤 ${z}`} style={{ display: "block" }}>
+          <defs>
+            <marker id="rn-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill={arrow} />
+            </marker>
+            <marker id="rn-arrow-skip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill={skip} />
+            </marker>
+          </defs>
+          <path d="M140 124 H175 V55 H220" fill="none" stroke={arrow} strokeWidth={3} markerEnd="url(#rn-arrow)" />
+          <path d="M380 55 H470 V97" fill="none" stroke={arrow} strokeWidth={3} markerEnd="url(#rn-arrow)" />
+          <path
+            d="M140 124 H175 V202 H470 V149"
+            fill="none"
+            stroke={skip}
+            strokeWidth={4}
+            markerEnd="url(#rn-arrow-skip)"
+            opacity={on ? 1 : 0.2}
+            strokeDasharray={on ? undefined : "7 6"}
+          />
+          <rect x="35" y="91" width="105" height="66" rx="12" fill={theme.bg.base} stroke={theme.border.strong} />
+          <text x="87.5" y="115" fontSize="16" textAnchor="middle" fill={ink}>입력 x</text>
+          <text x="87.5" y="145" fontSize="24" fontWeight="700" textAnchor="middle" fill={ink}>{fmtN(x)}</text>
+          <rect x="220" y="22" width="160" height="66" rx="12" fill={theme.fill.accentSubtle} stroke={theme.border.default} />
+          <text x="300" y="47" fontSize="16" textAnchor="middle" fill={ink}>잔차 경로 F(x)</text>
+          <text x="300" y="76" fontSize="24" fontWeight="700" textAnchor="middle" fill={ink}>{signed(f)}</text>
+          <circle cx="470" cy="123" r="26" fill={theme.bg.base} stroke={theme.border.strong} strokeWidth={2} />
+          <text x="470" y="132" fontSize="28" textAnchor="middle" fill={ink}>+</text>
+          <text x="470" y="184" fontSize="18" fontWeight="700" textAnchor="middle" fill={ink}>{`y = ${fmtN(y)}`}</text>
+          <text x="308" y="190" fontSize="17" textAnchor="middle" fill={on ? skip : theme.text.tertiary}>
+            {on ? `입력 그대로: ${fmtN(x)}` : "지름길 꺼짐: 0"}
+          </text>
+          <text x="309" y="234" fontSize="14" textAnchor="middle" fill={theme.text.secondary}>지름길은 입력을 합산 위치로 보냅니다</text>
+        </svg>
+      </div>
+      <Properties
+        items={[
+          { label: "지름길이 보내는 값", value: fmtN(s) },
+          { label: "합산 직후 y", value: fmtN(y) },
+          { label: "ReLU 뒤 출력", value: fmtN(z) },
+        ]}
+      />
+      <Text>{formula}</Text>
+      <Text>
+        원논문 블록은 합산 뒤에 ReLU(음수를 0으로 바꾸는 함수)를 둡니다. 그래서 x가 작고 F(x)가 크게 음수이면 합이 0 아래로 내려가 출력이 0이 됩니다.
+        이 점은 아래 "이후 연구 흐름"의 v2 위젯에서 이어 봅니다. F(x)는 원래 학습으로 정해지는 값인데, 여기서는 계산을 보려고 직접 조절합니다. 학습
+        과정이나 정확도를 흉내 낸 화면이 아닙니다. 근거: p.2 그림 2, p.3 §3.1~3.2, 식 (1).
+      </Text>
+    </>
+  );
+}
+
+// 원 복습실 ② 표 2 비교. 값은 논문 표 2 그대로, 차이는 계산값.
+const T2 = [
+  { name: "일반망 18층 (plain-18)", depth: 18, error: 27.94, res: false },
+  { name: "일반망 34층 (plain-34)", depth: 34, error: 28.54, res: false },
+  { name: "ResNet 18층", depth: 18, error: 27.88, res: true },
+  { name: "ResNet 34층", depth: 34, error: 25.03, res: true },
+];
+
+type DepthPick = "18" | "34";
+type View = "both" | "one";
+const PICK_OPTIONS = [
+  { value: "18" as const, label: "18층 강조" },
+  { value: "34" as const, label: "34층 강조" },
+];
+const VIEW_OPTIONS = [
+  { value: "both" as const, label: "두 깊이 함께 보기" },
+  { value: "one" as const, label: "선택한 깊이만" },
+];
+
+function Table2Lab() {
+  const [pick, setPick] = useState<DepthPick>("34");
+  const [view, setView] = useState<View>("both");
+  const d = Number(pick);
+  const visible = view === "both" ? T2 : T2.filter((r) => r.depth === d);
+  const emphasis = visible.findIndex((r) => r.depth === d && r.res);
+  const p = T2.find((r) => r.depth === d && !r.res)!.error;
+  const r = T2.find((r2) => r2.depth === d && r2.res)!.error;
+  return (
+    <>
+      <Callout lead={`${d}층끼리 비교 (계산값)`} tone="info">
+        {`일반망 ${p.toFixed(2)} − ResNet ${r.toFixed(2)} = ${(p - r).toFixed(2)}%p 낮아졌습니다. ${
+          d === 18 ? "18층에서는 거의 같습니다. 깊이를 34층으로 바꿔 보십시오." : "34층에서는 차이가 커집니다."
+        }`}
+      </Callout>
+      <Segmented options={PICK_OPTIONS} value={pick} onChange={setPick} />
+      <Segmented options={VIEW_OPTIONS} value={view} onChange={setView} />
+      <Bars
+        emphasis={emphasis}
+        bars={visible.map((b) => ({
+          label: b.name,
+          value: b.error,
+          display: `${b.error.toFixed(2)}%`,
+          meta: b.depth === d && b.res ? "낮을수록 좋음" : undefined,
+        }))}
+      />
+      <Table
+        columns={["비교", "계산", "차이 (계산값)"]}
+        rows={[
+          ["plain 18 → 34층", "28.54 − 27.94", { text: "0.60%p 나빠짐", tone: "danger" }],
+          ["ResNet 18 → 34층", "27.88 − 25.03", { text: "2.85%p 좋아짐 (논문 2.8%)", tone: "success" }],
+          ["18층 plain vs ResNet", "27.94 − 27.88", "0.06%p 차이"],
+          ["34층 plain vs ResNet", "28.54 − 25.03", { text: "3.51%p 차이 (논문 3.5%)", tone: "success" }],
+        ]}
+      />
+      <Text>
+        조건: ImageNet 검증 데이터, top-1 오류율(가장 높은 점수의 답이 틀린 비율), 10-crop(잘라낸 이미지 10개로 평가), 각 단일 모델입니다. ResNet은
+        차원이 늘 때 0으로 채우는 옵션 A를 써서 평범한 망과 파라미터 수가 같습니다 (p.5 §4.1, 표 2). 표 2는 검증 오류입니다. 학습 오류 곡선은 그림 4에서
+        따로 봅니다. 그림 4의 검증 곡선은 가운데 한 조각(center crop) 기준이므로 표 2의 10-crop 수치와 같은 조건으로 읽으면 안 됩니다.
+      </Text>
+    </>
+  );
+}
+
+// 원 복습실 ③ 차원 맞추기. 가중치와 잔차 값은 설명용 예시.
+const WS = [
+  [1, 0],
+  [0, 1],
+  [1, 1],
+];
+const FV = [1, -1, 2];
+type Opt = "A" | "B";
+const OPT_OPTIONS = [
+  { value: "A" as const, label: "옵션 A: 0 채우기" },
+  { value: "B" as const, label: "옵션 B: 사영(1×1 합성곱)" },
+];
+
+function DimensionLab() {
+  const [a, setA] = useState(2);
+  const [opt, setOpt] = useState<Opt>("A");
+  const xv = [a, 1];
+  const proj = opt === "B";
+  const sv = proj ? WS.map((row) => row.reduce((acc, w, j) => acc + w * xv[j], 0)) : [...xv, 0];
+  const yv = FV.map((f, i) => f + sv[i]);
+  const cells = (v: number[]) => v.map((n) => fmtN(n));
+  return (
+    <>
+      <Callout lead={proj ? "B: 가중치를 곱해 세 칸으로 바꿉니다" : "A: 입력 뒤에 0 한 칸을 붙입니다"} tone="info">
+        {proj
+          ? `예시 가중치 Ws = [[1, 0], [0, 1], [1, 1]]. 셋째 값은 1×${a} + 1×1 = ${sv[2]}입니다. 이 3×2 예시에는 학습할 가중치가 6개 있습니다(편향 제외).`
+          : `입력 [${xv.join(", ")}]을 [${sv.join(", ")}]으로 바꿉니다. 새 칸은 0이고, 더 학습할 가중치는 0개입니다.`}
+      </Callout>
+      <Slider id="rn-a" label="입력 첫째 값 a (예시)" value={a} min={0} max={6} step={1} show={fmtN(a)} onChange={setA} />
+      <Segmented options={OPT_OPTIONS} value={opt} onChange={setOpt} />
+      <Table
+        columns={["벡터", "1번째", "2번째", "3번째"]}
+        rows={[
+          ["입력 x (두 칸)", ...cells(xv), "없음"],
+          ["잔차 F(x) (세 칸)", ...cells(FV)],
+          [proj ? "지름길 Ws·x" : "지름길 [x, 0]", ...cells(sv)],
+          ["합산 직후 y", ...cells(yv)],
+        ]}
+      />
+      <Text>{`[${FV.join(", ")}] + [${sv.join(", ")}] = [${yv.join(", ")}] (예시 계산)`}</Text>
+      <Text>
+        잔차와 지름길은 같은 위치의 숫자끼리 더하므로 칸 수(채널 수, 특징을 담는 칸의 개수)가 같아야 합니다. 사영(projection)은 입력에 가중치를 곱해 크기를
+        맞추는 계산이고, 논문은 1×1 합성곱을 씁니다. 화면의 가중치는 고정한 예시이며 실제 모델에서는 학습합니다. 이미지의 가로·세로 크기까지 줄어드는
+        곳에서는 A, B 모두 보폭(stride) 2를 씁니다. 이 화면은 그 공간 축소는 계산하지 않습니다 (p.3~4 §3.3).
+      </Text>
+    </>
+  );
+}
+
+const QUIZ = [
+  {
+    q: "지름길을 켰습니다. 입력 x = 5, 잔차 F(x) = 0이면 합산 직후 y는 얼마인가요?",
+    source: "p.3 §3.2 식 (1), 예시 값",
+    opts: ["0", "5", "10", "입력만으로 계산할 수 없다"],
+    answer: 1,
+    why: [
+      "잔차는 0이지만 지름길에서 입력 5를 더합니다.",
+      "y = F(x) + x = 0 + 5 = 5입니다.",
+      "입력 5를 한 번만 더하므로 y는 5입니다.",
+      "잔차와 입력이 모두 주어졌으므로 0 + 5를 계산할 수 있습니다.",
+    ],
+  },
+  {
+    q: "§3.3의 옵션 A에서 채널 수를 늘리는 방법은 무엇인가요?",
+    source: "p.3~4 §3.3",
+    opts: ["늘어난 칸을 0으로 채운다", "늘어난 칸을 1로 채운다", "지름길에 학습할 가중치를 반드시 추가한다", "잔차 경로를 없애고 입력만 쓴다"],
+    answer: 0,
+    why: [
+      "옵션 A는 늘어난 칸을 0으로 채우며 학습할 가중치를 더하지 않습니다.",
+      "옵션 A는 늘어난 칸을 0으로 채웁니다.",
+      "가중치로 바꾸는 사영은 옵션 B입니다.",
+      "옵션 A도 잔차 경로와 지름길을 더합니다.",
+    ],
+  },
+  {
+    q: "결과 절의 표 2 막대그래프가 나타내는 값은 무엇인가요?",
+    source: "p.5 표 2, 10-crop, 각 단일 모델",
+    opts: ["ImageNet 학습 데이터의 top-1 오류", "ImageNet 테스트 데이터의 top-5 오류", "ImageNet 검증 데이터의 top-1 오류", "ImageNet 검증 데이터의 top-5 오류"],
+    answer: 2,
+    why: [
+      "표 2는 검증 데이터의 오류입니다. 학습 오류 곡선은 그림 4에 있습니다.",
+      "표 2는 테스트가 아니라 검증 데이터이고, 지표도 top-1입니다.",
+      "표 2는 ImageNet 검증 데이터의 top-1 오류를 10-crop으로 평가합니다.",
+      "표 2의 지표는 top-5가 아니라 top-1 오류입니다.",
+    ],
+  },
+];
+
+function QuizLab() {
+  const theme = useGrokTheme();
+  const [ans, setAns] = useState<(number | null)[]>(QUIZ.map(() => null));
+  const done = ans.filter((a) => a !== null).length;
+  const correct = ans.reduce<number>((n, a, i) => n + (a === QUIZ[i].answer ? 1 : 0), 0);
+  return (
+    <>
+      <Text>{`${done} / ${QUIZ.length}문제 선택${done ? `, ${correct}개 정답` : ""}`}</Text>
+      {QUIZ.map((item, i) => {
+        const pickd = ans[i];
+        return (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <Text>
+              <strong>{`${i + 1}. ${item.q}`}</strong> ({item.source})
+            </Text>
+            <div role="radiogroup" aria-label={`${i + 1}번 문제 선택지`} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {item.opts.map((o, j) => (
+                <button
+                  key={j}
+                  type="button"
+                  role="radio"
+                  aria-checked={pickd === j}
+                  onClick={() => setAns((prev) => prev.map((v, k) => (k === i ? j : v)))}
+                  style={{
+                    font: "inherit",
+                    ...theme.font.body2,
+                    textAlign: "left",
+                    color: theme.text.primary,
+                    background: pickd === j ? theme.fill.accentSubtle : theme.bg.base,
+                    border: `1px solid ${pickd === j ? theme.text.accent : theme.border.default}`,
+                    borderRadius: theme.radius.md,
+                    padding: "8px 12px",
+                    minHeight: 44,
+                    cursor: "pointer",
+                  }}
+                >
+                  {`${String.fromCharCode(65 + j)}. ${o}`}
+                </button>
+              ))}
+            </div>
+            {pickd !== null && (
+              <Callout lead={pickd === item.answer ? "정답입니다" : "다시 생각해 보십시오"} tone={pickd === item.answer ? "success" : "warning"}>
+                {item.why[pickd]}
+              </Callout>
+            )}
+          </div>
+        );
+      })}
+      <div>
+        <SmallButton onClick={() => setAns(QUIZ.map(() => null))}>퀴즈 다시 풀기</SmallButton>
+      </div>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <Page
       title="ResNet 쉽게 보기: 잔차 학습"
-      summary="층을 더 쌓았더니 학습 오차까지 커졌습니다. ResNet은 층이 결과 전체 H(x)가 아니라 입력에 더할 수정분 F(x)만 배우게 하고, 출력을 F(x) + x로 바꿔서 152층까지 깊이의 이득을 얻었습니다. 1년 뒤 후속 논문은 덧셈 뒤 ReLU까지 없애 지름길을 완전히 깨끗하게 만들었습니다."
+      summary="층을 더 쌓았더니 학습 오차까지 커졌습니다. ResNet은 층이 결과 전체 H(x)가 아니라 입력에 더할 수정분 F(x)만 배우게 하고, 출력을 F(x) + x로 바꿔서 152층까지 깊이의 이득을 얻었습니다. 1년 뒤 후속 논문은 덧셈 뒤 ReLU까지 없애 지름길을 완전히 깨끗하게 만들었습니다. 잔차 합산, 표 2 비교, 차원 맞추기는 위젯으로 직접 계산해 보고, 끝의 확인 퀴즈로 점검합니다."
       width="column"
       lang="ko"
     >
@@ -164,6 +542,7 @@ export default function App() {
           { label: "이후 연구 흐름", id: "after" },
           { label: "선행 개념", id: "prereq" },
           { label: "공부하며 짚은 질문", id: "qa" },
+          { label: "확인 퀴즈", id: "quiz" },
           { label: "개념 관계와 꼭 지킬 구분", id: "distinctions" },
           { label: "처음 이해한 것과 정정", id: "corrections" },
           { label: "다음에 공부할 질문", id: "next" },
@@ -222,6 +601,10 @@ export default function App() {
             쉽습니다 (p.3 §3.1). 다만 0은 목표가 아니라 기본 선택지입니다. 바꿀 것이 있으면 층은 그만큼의 수정분을 배웁니다.
           </Text>
         </Section>
+        <Section heading="직접 계산: 지름길에 잔차 더하기">
+          <Text>위 표를 손으로 계산해 봅니다. 지름길을 켠 채 F(x)를 0으로 바꾸면 블록이 저절로 항등 매핑이 됩니다.</Text>
+          <ResidualSumLab />
+        </Section>
         <Section heading="잔차 블록 (그림 2를 다시 그림)">
           <Diagram
             direction="vertical"
@@ -255,6 +638,10 @@ export default function App() {
               ["C", "모든 지름길을 사영", "B보다 아주 조금 좋음, 차이가 작아 이후 쓰지 않음"],
             ]}
           />
+        </Section>
+        <Section heading="직접 계산: 칸 수가 다를 때 (옵션 A와 B)">
+          <Text>입력은 두 칸, 잔차는 세 칸인 경우를 예로 듭니다. 옵션 A와 B로 지름길을 세 칸으로 맞춘 뒤 더해 봅니다.</Text>
+          <DimensionLab />
         </Section>
         <Section heading="전체 망 (표 1)">
           <Text>
@@ -329,23 +716,8 @@ export default function App() {
 
       <Section heading="결과" id="results">
         <Section heading="같은 조건 비교 (표 2, ImageNet 검증 top-1 오류율 %, 10-crop)">
-          <Bars
-            emphasis={3}
-            bars={[
-              { label: "plain 18층", value: 27.94, display: "27.94" },
-              { label: "plain 34층", value: 28.54, display: "28.54" },
-              { label: "ResNet 18층", value: 27.88, display: "27.88" },
-              { label: "ResNet 34층", value: 25.03, display: "25.03", meta: "낮을수록 좋음" },
-            ]}
-          />
-          <Table
-            columns={["비교", "계산", "차이"]}
-            rows={[
-              ["plain 18 → 34층", "28.54 − 27.94", { text: "0.60%p 나빠짐", tone: "danger" }],
-              ["ResNet 18 → 34층", "27.88 − 25.03", { text: "2.85%p 좋아짐 (논문 2.8%)", tone: "success" }],
-              ["34층 plain vs ResNet", "28.54 − 25.03", { text: "3.51%p 차이 (논문 3.5%)", tone: "success" }],
-            ]}
-          />
+          <Text>같은 깊이끼리 먼저 비교한 뒤, 깊이를 바꿔 비교해 보십시오. 막대는 논문 표 2의 값이고 짧을수록 좋습니다.</Text>
+          <Table2Lab />
           <Text>18층은 정확도가 비슷하지만 ResNet이 초반에 더 빨리 수렴합니다 (그림 4).</Text>
         </Section>
         <Section heading="더 깊은 망과 대회 결과">
@@ -433,7 +805,8 @@ export default function App() {
           />
           <Text>
             v1에서는 합이 음수면 ReLU가 0으로 바꿉니다. 그러면 지름길로 온 x도 잘리고, 그 위치의 기울기도 0이 됩니다. v2에서는 덧셈 뒤가 비어 있어
-            x가 그대로 남습니다. 아래에서 같은 숫자로 비교해 보십시오.
+            x가 그대로 남습니다. 앞의 "직접 계산: 지름길에 잔차 더하기" 위젯에서 x를 1, F(x)를 −3으로 두면 v1에서 출력이 0이 되는 것을 볼 수 있습니다. 아래에서는
+            같은 숫자로 v1과 v2를 나란히 비교하고, 지름길 기울기까지 봅니다.
           </Text>
           <ActivationLab />
         </Section>
@@ -599,6 +972,10 @@ export default function App() {
           </Text>
           <Text>논문 근거: "We hypothesize" (p.2 §1), "will be studied in the future" (p.5 §4.1).</Text>
         </Section>
+      </Section>
+
+      <Section heading="확인 퀴즈" id="quiz" caption="답을 고르면 바로 설명이 나옵니다">
+        <QuizLab />
       </Section>
 
       <Section heading="개념 관계와 꼭 지킬 구분" id="distinctions">
