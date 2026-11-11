@@ -37,6 +37,7 @@ Grok Page 원본 코드(`export default function App()` 하나짜리 TSX)를 받
    date: 2026-11-02
    category: basics # 홈 묶음: basics | vision | language | generative | context (없으면 "그 밖의 글")
    shortTitle: "Adam"        # 홈 목차에 보일 짧은 제목 (없으면 title)
+   tagline: "파라미터마다 걸음 크기"  # 제목 옆 회색 한마디. 2~4단어로 짧게
    authors: "Kingma·Ba"      # 선택
    paperYear: 2014           # 선택. 홈 왼쪽 연도 칸, 묶음 안 정렬 기준
    kind: lab       # lab(실습) | qa(논문 Q&A) | concept(개념) | research(연구 소개)

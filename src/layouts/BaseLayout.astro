@@ -4,8 +4,9 @@ import "../styles/global.css";
 interface Props {
   title: string;
   description?: string;
+  hideNav?: boolean;
 }
-const { title, description } = Astro.props;
+const { title, description, hideNav = false } = Astro.props;
 const base = import.meta.env.BASE_URL;
 const siteName = "explainers";
 const fullTitle = title === siteName ? title : `${title} · ${siteName}`;
@@ -22,9 +23,11 @@ const fullTitle = title === siteName ? title : `${title} · ${siteName}`;
     <title>{fullTitle}</title>
   </head>
   <body>
-    <div class="mx-auto flex max-w-[1280px] items-center justify-between px-6 pt-5 text-[14px] leading-5">
-      <a href={base} class="font-semibold text-ink no-underline hover:underline">{siteName}</a>
-    </div>
+    {!hideNav && (
+      <div class="mx-auto flex max-w-[1280px] items-center justify-between px-6 pt-5 text-[14px] leading-5">
+        <a href={base} class="font-semibold text-ink no-underline hover:underline">{siteName}</a>
+      </div>
+    )}
     <slot />
   </body>
 </html>

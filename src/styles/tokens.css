@@ -1,9 +1,10 @@
 /*
  * 디자인 토큰의 유일한 값 원본이다. 밝음은 :root, 어두움은 prefers-color-scheme: dark.
  * 잉크 비율·글자 크기·radius·간격은 키트 tokens.d.ts 주석 값을 따른다.
- * 색상 hex는 처음에 임시값이었으나(docs/DECISION_REVIEW.md D2), 2026-11-02 동원이 승인한 확정값이다. 색을 바꿀 때는 이 파일만 고치고, 먼저 동원에게 확인한다.
- * 2026-11-02 쿨톤으로 변경: 푸른 기가 아주 옅은 흰 바탕, 남색 기운의 먹색 글자, 강철빛 파랑(petrol blue)은 가는 선·링크·번호에만 쓴다.
- * 참고: qlabs.sh(slate 계열)와 openai.com 글 페이지. qlabs의 royal blue(#1d4ed8)·slate 바탕과는 색상을 다르게 잡았다.
+ * 색상 hex는 처음에 임시값이었으나(docs/DECISION_REVIEW.md D2), 동원이 승인한 확정값이다(2026-11-02 쿨톤, 2026-11-12 한옥 톤). 색을 바꿀 때는 이 파일만 고치고, 먼저 동원에게 확인한다.
+ * 2026-11-12 한옥 톤으로 변경(동원 요청): 북촌 한옥 대청에서 창호지로 걸러진 빛 같은 미색 한지 바탕, 먹색 글자,
+ *   흙·나무 그림자 같은 따뜻한 회색, 강조색은 쪽빛(쪽 염색 남색)을 가는 선·링크·번호에만 쓴다.
+ *   어두움은 밤의 한옥: 옻칠한 듯한 먹 바탕. 이전 쿨톤 값은 git 기록(커밋 df3afe0의 이 파일)에 있다.
  * 글자 크기·행간도 여기서 정한다(theme.ts는 var(--fs-…)만 가리킨다). 한국어 장문 기준 본문 17px, 행간 약 1.75.
  */
 :root {
@@ -27,46 +28,46 @@
   --tracking-body: -0.005em;
   --tracking-heading: -0.02em;
 
-  /* 쿨톤: 옅은 푸른 흰 바탕과 남색 먹 */
-  --bg-base: #fbfcfd;
-  --bg-subtle: #f0f4f7;
-  --bg-elevated: #ffffff;
+  /* 한옥 톤: 한지 바탕, 먹 글자, 쪽빛 강조 */
+  --bg-base: #f2eee6;
+  --bg-subtle: #e9e4da;
+  --bg-elevated: #f8f6f1;
 
-  --text-primary: #17202b;
-  --text-secondary: #4b5867;
-  --text-tertiary: #7b8796;
+  --text-primary: #262320;
+  --text-secondary: #595249;
+  --text-tertiary: #726a5f;
   --text-on-color: #ffffff;
-  --text-on-primary: #fbfcfd;
-  --text-accent: #1f6a94;
+  --text-on-primary: #f2eee6;
+  --text-accent: #3b5871;
   --text-success: #2e6b4f;
   --text-warning: #94650a;
   --text-danger: #b0283f;
-  --text-accent-deep: #164d6c;
+  --text-accent-deep: #2a4054;
   --text-success-deep: #1f4a37;
   --text-warning-deep: #5f4106;
   --text-danger-deep: #771b2b;
 
-  --fill-primary: #17202b;
-  --fill-primary-hover: rgb(23 32 43 / 0.85);
-  --fill-secondary: #e9eef3;
-  --fill-secondary-hover: #dfe6ed;
-  --fill-hover: rgb(23 32 43 / 0.045);
-  --fill-pressed: rgb(23 32 43 / 0.08);
-  --fill-accent: #1f6a94;
-  --fill-control-checked: #17202b;
-  --fill-accent-subtle: rgb(31 106 148 / 0.06);
+  --fill-primary: #262320;
+  --fill-primary-hover: rgb(38 35 32 / 0.85);
+  --fill-secondary: #e5dfd3;
+  --fill-secondary-hover: #dcd5c7;
+  --fill-hover: rgb(38 35 32 / 0.045);
+  --fill-pressed: rgb(38 35 32 / 0.08);
+  --fill-accent: #3b5871;
+  --fill-control-checked: #262320;
+  --fill-accent-subtle: rgb(59 88 113 / 0.07);
   --fill-success-subtle: rgb(46 107 79 / 0.06);
   --fill-warning-subtle: rgb(148 101 10 / 0.07);
   --fill-danger-subtle: rgb(176 40 63 / 0.05);
 
-  --border-subtle: #eef2f5;
-  --border-weak: #e3e9ee;
-  --border-default: #d4dce4;
-  --border-strong: #9aa9b8;
-  --border-focus: rgb(31 106 148 / 0.55);
+  --border-subtle: #e6e0d5;
+  --border-weak: #ddd6c9;
+  --border-default: #d0c7b8;
+  --border-strong: #a0957f;
+  --border-focus: rgb(59 88 113 / 0.55);
 
-  --link-underline: rgb(31 106 148 / 0.32);
-  --scroll-shadow: rgb(23 32 43 / 0.12);
+  --link-underline: rgb(59 88 113 / 0.3);
+  --scroll-shadow: rgb(38 35 32 / 0.12);
 
   /* 데이터 색: categorical·other·negative는 양 모드 같다 */
   --dv-cat-0: #2f6fed;
@@ -90,44 +91,44 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-base: #0f1419;
-    --bg-subtle: #161d25;
-    --bg-elevated: #18202a;
+    --bg-base: #1a1815;
+    --bg-subtle: #221f1b;
+    --bg-elevated: #26231f;
 
-    --text-primary: #e2e8ee;
-    --text-secondary: #a5b1be;
-    --text-tertiary: #76828f;
+    --text-primary: #ebe5da;
+    --text-secondary: #b5ac9e;
+    --text-tertiary: #8f8678;
     --text-on-color: #ffffff;
-    --text-on-primary: #0f1419;
-    --text-accent: #7db4d8;
+    --text-on-primary: #1a1815;
+    --text-accent: #9db8cf;
     --text-success: #86c2a3;
     --text-warning: #d9b066;
     --text-danger: #ec8f9e;
-    --text-accent-deep: #bcdcf0;
+    --text-accent-deep: #cddceb;
     --text-success-deep: #c2e3d1;
     --text-warning-deep: #f0d9a8;
     --text-danger-deep: #f6c5cd;
 
-    --fill-primary: #e2e8ee;
-    --fill-primary-hover: rgb(226 232 238 / 0.85);
-    --fill-secondary: #1d2630;
-    --fill-secondary-hover: #26313d;
-    --fill-hover: rgb(226 232 238 / 0.06);
-    --fill-pressed: rgb(226 232 238 / 0.1);
-    --fill-accent: #7db4d8;
-    --fill-control-checked: #e2e8ee;
-    --fill-accent-subtle: rgb(125 180 216 / 0.08);
+    --fill-primary: #ebe5da;
+    --fill-primary-hover: rgb(235 229 218 / 0.85);
+    --fill-secondary: #2a2722;
+    --fill-secondary-hover: #34302a;
+    --fill-hover: rgb(235 229 218 / 0.06);
+    --fill-pressed: rgb(235 229 218 / 0.1);
+    --fill-accent: #9db8cf;
+    --fill-control-checked: #ebe5da;
+    --fill-accent-subtle: rgb(157 184 207 / 0.08);
     --fill-success-subtle: rgb(134 194 163 / 0.08);
     --fill-warning-subtle: rgb(217 176 102 / 0.06);
     --fill-danger-subtle: rgb(236 143 158 / 0.05);
 
-    --border-subtle: rgb(226 232 238 / 0.05);
-    --border-weak: rgb(226 232 238 / 0.09);
-    --border-default: rgb(226 232 238 / 0.15);
-    --border-strong: rgb(226 232 238 / 0.36);
-    --border-focus: rgb(125 180 216 / 0.6);
+    --border-subtle: rgb(235 229 218 / 0.05);
+    --border-weak: rgb(235 229 218 / 0.09);
+    --border-default: rgb(235 229 218 / 0.15);
+    --border-strong: rgb(235 229 218 / 0.36);
+    --border-focus: rgb(157 184 207 / 0.6);
 
-    --link-underline: rgb(125 180 216 / 0.38);
+    --link-underline: rgb(157 184 207 / 0.38);
     --scroll-shadow: rgb(0 0 0 / 0.5);
 
     /* 어두움에서는 단계를 뒤집어 1단계가 조용한 쪽이 되게 한다 */

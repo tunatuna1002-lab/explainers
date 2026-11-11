@@ -7,6 +7,7 @@ const posts = await getCollection("posts", ({ data }) => !data.draft);
 const fmt = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" });
 
 // 홈 목차: 주제별로 묶고, 묶음 안에서는 논문 연도 → order → 작성일 순서다.
+// 연도는 같은 연도가 이어지면 첫 줄에만 쓴다.
 const groups = [
   { key: "basics", label: "신경망이 배우는 법" },
   { key: "vision", label: "이미지" },
@@ -18,48 +19,53 @@ const groups = [
 const kindLabel = { lab: "실습", qa: "논문 Q&A", concept: "개념", research: "연구 소개" } as const;
 
 const sections = groups
-  .map((g) => ({
-    ...g,
-    posts: posts
+  .map((g) => {
+    const list = posts
       .filter((p) => p.data.category === g.key)
       .sort(
         (a, b) =>
           (a.data.paperYear ?? 9999) - (b.data.paperYear ?? 9999) ||
           a.data.order - b.data.order ||
           a.data.date.valueOf() - b.data.date.valueOf(),
-      ),
-  }))
+      );
+    return {
+      ...g,
+      posts: list.map((p, i) => ({ post: p, showYear: i === 0 || list[i - 1].data.paperYear !== p.data.paperYear })),
+    };
+  })
   .filter((g) => g.posts.length > 0);
 ---
 
-<BaseLayout title="explainers" description="공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음">
-  <main class="mx-auto max-w-[700px] px-5 pb-24 pt-12">
-    <h1 class="m-0 text-[30px] font-bold leading-9">explainers</h1>
-    <p class="mb-0 mt-3 text-[16px] leading-6 text-ink-2">
-      공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음입니다.
-    </p>
+<BaseLayout title="explainers" description="공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음" hideNav>
+  <main class="home">
+    <header class="intro">
+      <h1>explainers</h1>
+      <p class="sub">논문 공부 노트</p>
+      <p class="lead">공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 모음입니다. 제목에 마우스를 올리면 요약이 보입니다.</p>
+    </header>
 
     {
       sections.map((s) => (
-        <section class="toc-group">
-          <h2 class="toc-head">
-            {s.label}
-            <span class="toc-count">{s.posts.length}</span>
-          </h2>
-          <ul class="toc-list">
-            {s.posts.map((post) => {
+        <section class="group">
+          <h2>{s.label}</h2>
+          <ul>
+            {s.posts.map(({ post, showYear }) => {
               const d = post.data;
               const noteId = `note-${post.id}`;
               const meta = [d.authors, kindLabel[d.kind], `${fmt.format(d.date)} 작성`].filter(Boolean).join(" · ");
               return (
-                <li class="toc-item">
-                  <a href={`${base}posts/${post.id}/`} class="toc-link" aria-describedby={noteId}>
-                    <span class="toc-year">{d.paperYear ?? ""}</span>
-                    <span class="toc-title">{d.shortTitle ?? d.title}</span>
+                <li class="row">
+                  <a href={`${base}posts/${post.id}/`} aria-describedby={noteId}>
+                    <span class="year">{showYear ? (d.paperYear ?? "") : ""}</span>
+                    <span class="label">
+                      <span class="title">{d.shortTitle ?? d.title}</span>
+                      {d.tagline && <span class="tagline">{d.tagline}</span>}
+                    </span>
+                    <span class="kind">{d.kind !== "lab" ? kindLabel[d.kind] : ""}</span>
                   </a>
-                  <div class="toc-note" id={noteId} role="note">
+                  <div class="note" id={noteId} role="note">
                     <p>{d.summary}</p>
-                    <p class="toc-meta">{meta}</p>
+                    <p class="meta">{meta}</p>
                   </div>
                 </li>
               );
@@ -72,102 +78,95 @@ const sections = groups
 </BaseLayout>
 
 <style>
-  .toc-group { margin-top: 48px; }
-  .toc-group + .toc-group { margin-top: 40px; }
-
-  .toc-head {
-    margin: 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-default);
-    font-size: 14px;
-    line-height: 20px;
-    font-weight: 600;
-    letter-spacing: 0;
-    color: var(--text-secondary);
-  }
-  .toc-count {
-    margin-left: 6px;
-    font-weight: 400;
-    color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .toc-list { margin: 0; padding: 0; list-style: none; }
-  .toc-item { position: relative; border-bottom: 1px solid var(--border-subtle); }
-
-  .toc-link {
-    display: grid;
-    grid-template-columns: 52px 1fr;
-    align-items: baseline;
-    padding: 11px 0;
+  /* 참고: minwookshin.com의 글자 중심 목록. 작은 글자, 선 없는 행, 왼쪽 연도 칸, 오른쪽 예외 표시. */
+  .home {
+    max-width: 590px;
+    margin: 0 auto;
+    padding: 72px 20px 120px;
+    font-size: 15px;
+    line-height: 24px;
     color: var(--text-primary);
+    word-break: keep-all;
+  }
+  .intro h1 { margin: 0; font-size: 15px; line-height: 24px; font-weight: 500; letter-spacing: 0; }
+  .intro .sub { margin: 0; color: var(--text-tertiary); }
+  .intro .lead { margin: 20px 0 0; color: var(--text-primary); }
+
+  .group { margin-top: 48px; }
+  .group h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    line-height: 24px;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--text-tertiary);
+  }
+  .group ul { margin: 0; padding: 0; list-style: none; }
+
+  .row { position: relative; }
+  .row a {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+    column-gap: 16px;
+    padding: 2px 0;
+    color: inherit;
     text-decoration: none;
   }
-  .toc-year {
-    font-size: 13px;
-    color: var(--text-tertiary);
-    font-variant-numeric: tabular-nums;
+  .year { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+  .label { display: flex; flex-wrap: wrap; column-gap: 10px; min-width: 0; }
+  .title {
+    text-decoration: underline;
+    text-decoration-color: var(--border-default);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: text-decoration-color var(--motion-hover), color var(--motion-hover);
   }
-  .toc-title {
-    font-size: 17px;
-    line-height: 26px;
-    font-weight: 500;
-    letter-spacing: var(--tracking-body);
-    transition: color 120ms;
-  }
-  .toc-item:hover .toc-title,
-  .toc-link:focus-visible .toc-title { color: var(--text-accent); }
-  .toc-link:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 4px; }
+  .tagline { color: var(--text-tertiary); }
+  .kind { color: var(--text-tertiary); white-space: nowrap; }
+
+  .row:hover .title,
+  .row a:focus-visible .title { text-decoration-color: var(--text-primary); }
+  .row a:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 3px; }
 
   /* 요약·저자·종류·작성일은 마우스를 올렸을 때만 보인다. 터치 화면에서는 숨긴다. */
-  .toc-note {
+  .note {
     position: absolute;
     z-index: 10;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transition: opacity 120ms, visibility 0s linear 120ms;
-    font-size: 14px;
-    line-height: 22px;
+    font-size: 13px;
+    line-height: 21px;
     color: var(--text-secondary);
-    word-break: keep-all;
   }
-  .toc-note p { margin: 0; }
-  .toc-note .toc-meta { margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--text-tertiary); }
+  .note p { margin: 0; }
+  .note .meta { margin-top: 6px; font-size: 12px; line-height: 18px; color: var(--text-tertiary); }
 
   @media (hover: hover) {
-    .toc-item:hover .toc-note,
-    .toc-link:focus-visible + .toc-note {
-      opacity: 1;
-      visibility: visible;
-      transition-delay: 80ms, 0s;
-    }
+    .row:hover .note,
+    .row a:focus-visible + .note { opacity: 1; visibility: visible; transition-delay: 80ms, 0s; }
   }
   @media (hover: none) {
-    .toc-note { display: none; }
+    .note { display: none; }
   }
-
-  /* 넓은 화면: 오른쪽 여백에 곁주석처럼 */
-  @media (min-width: 1240px) {
-    .toc-note {
-      top: 12px;
-      left: calc(100% + 40px);
-      width: 250px;
-      padding-left: 14px;
-      border-left: 1px solid var(--border-default);
-    }
+  @media (min-width: 1180px) {
+    .note { top: 2px; left: calc(100% + 48px); width: 240px; }
   }
-  /* 좁은 화면: 행 아래에 떠 있는 상자로 */
-  @media (max-width: 1239.98px) {
-    .toc-note {
-      top: calc(100% - 4px);
-      left: 52px;
+  @media (max-width: 1179.98px) {
+    .note {
+      top: calc(100% + 2px);
+      left: 104px;
       right: 0;
-      padding: 12px 14px;
+      padding: 10px 12px;
       background: var(--bg-elevated);
-      border: 1px solid var(--border-default);
-      border-radius: 8px;
-      box-shadow: 0 6px 20px -8px var(--scroll-shadow);
+      border: 1px solid var(--border-weak);
+      border-radius: 6px;
+      box-shadow: 0 6px 18px -10px var(--scroll-shadow);
     }
+  }
+  @media (max-width: 560px) {
+    .home { padding-top: 48px; }
+    .row a { grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 12px; }
   }
 </style>
