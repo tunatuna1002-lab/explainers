@@ -592,7 +592,7 @@ function AxisLab() {
         {arr(a)}.{" "}
         {isLN
           ? "샘플 B를 바꿔도 A는 자기 행만 보므로 그대로입니다."
-          : "샘플 B가 같은 열의 평균·분산에 참여하므로 A의 값도 바뀝니다."}
+          : "샘플 B의 값이 같은 열의 평균·분산 계산에 들어가므로 A의 값도 바뀝니다."}
       </Callout>
       <Note>정규화 값 = (입력 − 평균) ÷ 표준편차. 분산은 평균에서 벗어난 거리의 제곱을 평균 낸 값이고, 표준편차는 그 제곱근입니다.</Note>
     </div>
@@ -651,14 +651,14 @@ function BatchOneLab() {
           <Note>
             평균 {arr(bn.stats.map((s) => s.mean))} · 분산 {arr(bn.stats.map((s) => s.variance))}
           </Note>
-          <BarChart series={[{ values: bn.values, color: theme.dataviz.categorical[1] }]} title="첫 샘플의 배치 정규화 출력 (예시)" limit={lim} />
+          <BarChart series={[{ values: bn.values, color: theme.dataviz.categorical[1] }]} title="첫 샘플의 BatchNorm 출력 (예시)" limit={lim} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
           <div style={head}>LayerNorm · 가로로 모으기</div>
           <Note>
             평균 {fmtN(ln.mean)} · 분산 {fmtN(ln.variance)}
           </Note>
-          <BarChart series={[{ values: ln.values, color: theme.dataviz.categorical[0] }]} title="첫 샘플의 층 정규화 출력 (예시)" limit={lim} />
+          <BarChart series={[{ values: ln.values, color: theme.dataviz.categorical[0] }]} title="첫 샘플의 LayerNorm 출력 (예시)" limit={lim} />
         </div>
       </div>
       <Callout lead="지금 보고 있는 것" tone={n === 1 ? "warning" : "info"}>
@@ -758,9 +758,9 @@ function TimeLab() {
           value={view}
           onChange={setView}
         />
-        <Btn onClick={() => setT((s) => (s % TIME_INPUTS.length) + 1)}>다음 단계</Btn>
+        <Btn onClick={() => setT((s) => (s % TIME_INPUTS.length) + 1)}>다음 시점</Btn>
       </Row>
-      <Slider id="ln-time" label="현재 시간 단계" value={t} min={1} max={4} step={1} show={String(t)} onChange={(x) => setT(Math.round(x))} />
+      <Slider id="ln-time" label="현재 시점" value={t} min={1} max={4} step={1} show={String(t)} onChange={(x) => setT(Math.round(x))} />
       <Row>
         {TIME_INPUTS.map((_, i) => (
           <span
@@ -773,7 +773,7 @@ function TimeLab() {
               color: i + 1 === t ? theme.text.onPrimary : theme.text.secondary,
             }}
           >
-            시간 {i + 1}
+            시점 {i + 1}
           </span>
         ))}
       </Row>
@@ -789,10 +789,10 @@ function TimeLab() {
       />
       <BarChart
         series={[{ values: raw ? v : n.values, color: raw ? theme.dataviz.other : theme.dataviz.categorical[0] }]}
-        title={`시간 ${t}의 ${raw ? "가중합 입력" : "정규화 값"} (예시)`}
+        title={`시점 ${t}의 ${raw ? "가중합 입력" : "정규화 값"} (예시)`}
       />
       <Callout lead="지금 보고 있는 것" tone="info">
-        현재 단계의 특징끼리 계산합니다. 시간축을 합치지 않습니다. 각 특징의 gain(크기 조절)과 bias(위치 이동)는 모든 시간 단계에서 공유합니다.
+        현재 시점의 특징끼리 계산합니다. 시간축을 합치지 않습니다. 각 특징의 gain(크기 조절)과 bias(위치 이동)는 모든 시점에서 공유합니다.
       </Callout>
       <Note>
         가중합 입력은 미리 정한 예시입니다. 이 화면은 정규화만 계산하며 RNN 학습을 재현하지 않습니다. 공유 gain = 1, bias = 0으로 두었습니다.
@@ -858,26 +858,26 @@ function Quiz({ items }: { items: readonly QuizItem[] }) {
 
 const QUIZ: QuizItem[] = [
   {
-    q: "LayerNorm은 숫자표에서 어느 값들을 함께 묶나요?",
+    q: "LayerNorm은 숫자표에서 어느 값들을 함께 묶습니까?",
     choices: ["같은 특징의 여러 샘플을 세로로 묶습니다.", "한 샘플의 여러 특징을 가로로 묶습니다.", "모든 샘플과 특징을 한꺼번에 묶습니다."],
     correct: 1,
     why: "LayerNorm은 한 샘플의 같은 층 특징들로 평균·분산을 구합니다. (p.2, §3)",
   },
   {
-    q: "배치 크기 1에서 ε 보호 계산을 켜면, 숫자표의 BatchNorm은 어떻게 되나요?",
+    q: "배치 크기 1에서 ε 보호 계산을 켜면, 숫자표의 BatchNorm은 어떻게 됩니까?",
     choices: ["여러 샘플이 있는 것처럼 다양성이 생깁니다.", "분산은 0이고 정규화 출력도 모두 0입니다.", "LayerNorm과 항상 같은 출력을 냅니다."],
     correct: 1,
-    why: "입력에서 자기 자신인 평균을 빼면 0입니다. ε는 분모만 보호합니다. (식 (2)로 계산한 예시. ε는 논문 밖)",
+    why: "평균이 입력 자신이라 입력에서 평균을 빼면 0입니다. ε는 분모만 보호합니다. (식 (2)로 계산한 예시. ε는 논문 밖)",
   },
   {
-    q: "RNN의 시간 단계가 바뀔 때 맞는 설명은 무엇인가요?",
+    q: "RNN의 시점이 바뀔 때 맞는 설명은 무엇입니까?",
     choices: [
-      "평균·분산과 gain·bias를 모두 이전 단계 값으로 고정합니다.",
+      "평균·분산과 gain·bias를 모두 이전 시점 값으로 고정합니다.",
       "시간축의 모든 입력을 모아 하나의 평균·분산을 씁니다.",
-      "현재 단계의 통계는 다시 구하고, gain·bias는 시간 전체에서 공유합니다.",
+      "현재 시점의 통계는 다시 구하고, gain·bias는 모든 시점에서 공유합니다.",
     ],
     correct: 2,
-    why: "통계는 현재 입력에서 계산하며, 학습하는 gain·bias는 시간 단계 사이에 공유합니다. (p.3, §3.1)",
+    why: "통계는 현재 입력에서 계산하며, 학습하는 gain·bias는 모든 시점에서 공유합니다. (p.3, §3.1)",
   },
 ];
 
@@ -931,8 +931,8 @@ export default function App() {
           ]}
         />
         <Text>
-          아래 실험은 두 겹입니다. 먼저 점수표로 큰 그림을 봅니다. 이어서 작은 숫자표로 같은 내용을 정확히 계산하고, gain·bias와 RNN까지
-          넓혀 봅니다. 모든 입력과 계산 결과는 예시 값입니다. 정확도나 학습 속도 예측은 포함하지 않습니다.
+          아래 실험에서는 먼저 점수표로 두 방법이 평균을 내는 방향을 봅니다. 이어서 작은 숫자표로 같은 내용을 정확히 계산하고, gain·bias와
+          RNN(순환 신경망)까지 넓혀 봅니다. 모든 입력과 계산 결과는 예시 값입니다. 정확도나 학습 속도 예측은 포함하지 않습니다.
         </Text>
       </Section>
 
@@ -954,7 +954,7 @@ export default function App() {
       <Section heading="숫자로 확인: 누구끼리 묶나" id="axis" caption="예시 값 · p.2, §2 식 (2) · §3 식 (3)">
         <Text>
           점수표에서 본 "방향"을 3×3 숫자표로 정확히 계산합니다. 행은 샘플(점수표의 학생), 열은 특징(점수표의 과목)입니다. 샘플 B의 값만
-          바꾸면 샘플 A의 계산도 바뀔까요? 두 방법을 번갈아 누르고 슬라이더를 움직여 보십시오.
+          바꾸면 샘플 A의 계산도 바뀝니까? 두 방법을 번갈아 누르고 슬라이더를 움직여 보십시오.
         </Text>
         <AxisLab />
         <Text>
@@ -974,15 +974,15 @@ export default function App() {
           되지만 BatchNorm 출력은 모두 0입니다. ε가 다양성을 만들어 주지는 않습니다. 이 화면은 값의 개수로 나누어 분산을 계산합니다.
         </Text>
         <Callout lead="일반화 주의" tone="warning">
-          이 숫자표는 샘플마다 각 특징값이 하나씩 있는 완전연결층의 학습 예시입니다. CNN이나 추론 단계 전체에 일반화하지 마십시오.
+          이 숫자표는 샘플마다 각 특징값이 하나씩 있는 완전연결층의 학습 예시입니다. 합성곱망(CNN, 이미지용 신경망)이나 추론 단계 전체에 일반화하지 마십시오.
           LayerNorm도 한 샘플의 특징값이 모두 같으면 원문 식의 분모가 0이 됩니다.
         </Callout>
       </Section>
 
       <Section heading="다시 펴고 옮기기: gain·bias" id="gain" caption="예시 값 · p.3, §3.1 식 (4) · p.1 초록">
         <Text>
-          정규화만 하면 값이 늘 평균 0, 퍼짐 1에 묶입니다. 그래서 LayerNorm은 정규화한 값에 gain을 곱하고 bias를 더합니다. 이 조절은 비선형
-          함수(활성함수)에 넣기 전에 합니다 (p.1 초록). 배치 정규화의 γ·β와 같은 역할입니다.
+          정규화만 하면 값의 평균은 늘 0, 퍼짐은 늘 1이 됩니다. 그래서 LayerNorm은 정규화한 값에 gain을 곱하고 bias를 더합니다. 이 조절은 비선형
+          함수(활성함수)에 넣기 전에 합니다 (p.1 초록). gain·bias는 BatchNorm의 γ·β와 같은 역할입니다.
         </Text>
         <GainLab />
         <Text>
@@ -993,8 +993,8 @@ export default function App() {
 
       <Section heading="RNN: 시간마다 새 기준" id="rnn" caption="예시 값 · p.3, §3.1 식 (4)">
         <Text>
-          RNN(순환 신경망, recurrent neural network)은 이전 상태를 다음 단계에 전달하며 문장을 한 단어씩 읽습니다. LayerNorm은 시점마다 그
-          시점의 특징들로 평균·분산을 다시 구합니다. 시간 단계를 바꿔 보십시오.
+          RNN(순환 신경망, recurrent neural network)은 이전 상태를 다음 시점에 전달하며 문장을 한 단어씩 읽습니다. LayerNorm은 시점마다 그
+          시점의 특징들로 평균·분산을 다시 구합니다. 시점을 바꿔 보십시오.
         </Text>
         <TimeLab />
         <Text>
@@ -1027,11 +1027,11 @@ export default function App() {
           />
         </Grid>
         <Text>
-          위 실험들을 이 표에 맞춰 보면 이렇습니다. "누구끼리 묶나"는 평균 내는 방향, "배치에 하나만 남기면"은 배치 크기 의존, "RNN: 시간마다
+          이 표의 줄 가운데 셋은 위 실험에서 직접 확인할 수 있습니다. "누구끼리 묶나"는 평균 내는 방향, "배치에 하나만 남기면"은 배치 크기 의존, "RNN: 시간마다
           새 기준"은 RNN 적용 줄입니다.
         </Text>
         <Text>
-          결과도 있습니다. 이미지·문장 검색 모델은 최고 검증 성능에 도달하는 데 기준 모델 시간의 60%만 걸렸습니다 (p.7
+          논문 실험에서 LayerNorm을 쓴 이미지·문장 검색 모델은 최고 검증 성능에 도달하는 데 기준 모델 시간의 60%만 걸렸습니다 (p.7
           §6.1). MNIST 실험에서는 배치 크기 4일 때도 LayerNorm이 안정적이었습니다 (p.10 그림 6).
         </Text>
       </Section>
@@ -1061,12 +1061,12 @@ export default function App() {
 
       <Section heading="주의: 합성곱망에서는 약함" id="caution">
         <Text>
-          LayerNorm이 BatchNorm보다 항상 낫다는 뜻이 아닙니다. 저자들도 합성곱망(CNN, 이미지용 신경망)에서는 BatchNorm이 더
+          LayerNorm이 BatchNorm보다 항상 나은 것은 아닙니다. 저자들도 합성곱망(CNN, 이미지용 신경망)에서는 BatchNorm이 더
           좋았다고 밝힙니다 (p.10 §6.7).
         </Text>
         <Callout lead="저자들이 본 이유" tone="warning">
-          이미지 가장자리를 보는 뉴런은 거의 꺼져 있습니다. 그래서 같은 층 뉴런들의 통계가 서로 너무 다릅니다. 한 평균으로
-          묶기 어렵다는 뜻입니다. 저자들은 더 연구가 필요하다고 썼습니다 (p.10 §6.7).
+          이미지 가장자리를 보는 뉴런은 거의 꺼져 있습니다. 그래서 같은 층 뉴런들의 통계가 서로 너무 달라 한 평균으로
+          묶기 어렵습니다. 저자들은 더 연구가 필요하다고 썼습니다 (p.10 §6.7).
         </Callout>
         <Text>
           비유로 말하면, 한 학생의 과목 중 몇 개가 늘 0점이면 그 학생의 평균은 나머지 과목을 잘 대표하지 못합니다 (추정, 비유
@@ -1076,7 +1076,7 @@ export default function App() {
 
       <Section heading="확인 질문과 답" id="quiz">
         <Callout lead="질문" tone="info">
-          배치 크기가 1일 때, BatchNorm은 왜 곤란하고 LayerNorm은 왜 괜찮을까요? 점수표 위젯이나 "배치에 하나만 남기면" 실험에서 배치 크기를
+          배치 크기가 1일 때, BatchNorm은 왜 곤란하고 LayerNorm은 왜 괜찮습니까? 점수표 위젯이나 "배치에 하나만 남기면" 실험에서 배치 크기를
           1로 두고 두 방법을 번갈아 본 뒤, 먼저 말로 답해 보십시오.
         </Callout>
         <Text>

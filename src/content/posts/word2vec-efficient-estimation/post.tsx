@@ -93,7 +93,7 @@ const QAS: QA[] = [
     question: "이것의 기하적 직관에 대해 설명해줘. 혹은 통계적 직관에 대해",
     where: "4쪽 3.1–3.2절",
     selected: "CBOW: 앞뒤 단어로 가운데 단어를 맞혀요. / Skip-gram: 가운데 단어로 주변 단어를 맞혀요.",
-    answer: "기하로는 내적이 두 화살표의 방향 일치라고 설명했다. CBOW는 문맥 벡터의 평균(무게중심)에, Skip-gram은 각 이웃 쪽으로 단어 벡터를 맞춘다. 그래서 공통 이웃이 많은 단어가 가까워진다. 통계로는 분포 가설을 들고, 네거티브 샘플링 Skip-gram이 PMI 행렬 분해와 같다는 후속 연구(Levy & Goldberg 2014)를 소개했다. 표 3에서 Skip-gram은 의미 55%, CBOW는 문법 64%로 강점이 다르다고 덧붙였다.",
+    answer: "기하로는 내적이 두 화살표의 방향 일치라고 설명했다. CBOW는 주변 단어 벡터의 평균(무게중심)에, Skip-gram은 각 주변 단어 쪽으로 단어 벡터를 맞춘다. 그래서 주변 단어가 많이 겹치는 단어끼리 가까워진다. 통계로는 분포 가설을 들고, 네거티브 샘플링 Skip-gram이 PMI 행렬 분해와 같다는 후속 연구(Levy & Goldberg 2014)를 소개했다. 표 3에서 Skip-gram은 의미 55%, CBOW는 문법 64%로 강점이 다르다고 덧붙였다.",
     verdict: "평균(3.1절)과 표 3 수치는 원문과 같다. PMI 해석은 후속 연구이고 그 논문은 이번에 열지 않았다(미확인). 이 논문은 네거티브 샘플링이 아니라 계층적 소프트맥스를 쓴다는 점은 답변이 직접 밝혔다",
     notes: [],
   },
@@ -231,7 +231,7 @@ export default function App() {
   return (
     <Page
       title="word2vec 논문 읽기 (Mikolov 외, 2013)"
-      summary="요약: (1) Mikolov 외(2013) word2vec 논문을 Moonlight로 읽으며 물은 12개 질문을 논문 위치, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 자동 요약에서 틀림 3개, 부분 2개, 보충 1개를 찾았습니다. 가장 큰 문제는 학습 데이터 조건을 빼서 NNLM이 더 좋아 보이게 만든 결과표입니다. (3) 원문의 결론은 은닉층을 없애 계산을 크게 줄였고, 그래서 더 큰 데이터와 벡터로 NNLM보다 정확한 단어 벡터를 얻었다는 것입니다."
+      summary="요약: (1) Mikolov 외(2013) word2vec 논문을 Moonlight로 읽으며 물은 12개 질문을 논문 위치, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 자동 요약에서 틀림 3개, 부분 2개, 보충 1개를 찾았습니다. 가장 큰 문제는 학습 데이터 조건을 빼서 NNLM(신경망 언어모델)이 더 좋아 보이게 만든 결과표입니다. (3) 원문은 은닉층을 없애 계산을 크게 줄였고, 그래서 더 큰 데이터와 벡터로 NNLM보다 정확한 단어 벡터를 얻었다고 결론짓습니다."
       width="column"
       lang="ko"
     >
@@ -258,7 +258,7 @@ export default function App() {
           ]}
         />
         <Text>
-          Q&A마다 내 질문, 논문 위치, AI 답변 요약, 검증 결과를 적었다. 질문은 친 그대로 옮겼다. 검증은 원문 PDF와 출처 링크로 했다. Moonlight AI 요약에서 문제가 있는 문장은 Q4 아래 상자에 판정과 함께 적었다. 숫자 중 '계산값'은 대화 중 직접 계산한 값이다.
+          Q&A마다 내 질문, 논문 위치, AI 답변 요약, 검증 결과를 적었습니다. 질문은 친 그대로 옮겼습니다. 원문 PDF와 출처 링크로 검증했습니다. Moonlight AI 요약에서 문제가 있는 문장은 Q4 아래 상자에 판정과 함께 적었습니다. 숫자 중 '계산값'은 대화 중 직접 계산한 값입니다.
         </Text>
         <Table
           columns={["판정", "뜻"]}
@@ -273,28 +273,28 @@ export default function App() {
       </Section>
 
       <Section heading="Q&A 1: 이전 모델과 직관 (Q1–Q3)" id="qa-basics">
-        <Text>논문을 처음 읽으며 이 논문이 어디서 출발했는지, 두 모델을 어떻게 이해할지 물었다.</Text>
+        <Text>논문을 처음 읽으며 이 논문 이전에 어떤 모델이 있었는지, 두 모델을 어떻게 이해할지 물었습니다.</Text>
         {QAS.slice(0, 3).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
       </Section>
 
       <Section heading="Q&A 2: Moonlight AI 요약 검토 (Q4–Q7)" id="qa-summary">
-        <Text>Moonlight가 만든 자동 요약을 붙여 넣고 풀어 달라고 한 뒤, 원문과 대조하며 이어 물었다.</Text>
+        <Text>Moonlight AI가 만든 자동 요약을 붙여 넣고 풀어 달라고 한 뒤, 원문과 대조하며 이어 물었습니다.</Text>
         {QAS.slice(3, 7).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
       </Section>
 
       <Section heading="Q&A 3: CBOW와 Skip-gram 깊이 보기 (Q8–Q12)" id="qa-models">
-        <Text>두 모델이 NNLM보다 나은 점, 서로의 차이, Skip-gram의 범위 R을 물었다.</Text>
+        <Text>두 모델이 NNLM보다 나은 점, 서로의 차이, Skip-gram의 범위 R을 물었습니다.</Text>
         {QAS.slice(7).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
       </Section>
 
       <Section heading="Moonlight AI 요약 검토 결과" id="verify">
-        <Text>틀림 3개, 부분 2개, 보충 1개. 번호는 Q4 아래 상자의 번호와 같다.</Text>
+        <Text>판정은 틀림 3개, 부분 2개, 보충 1개입니다. 번호는 Q4 아래 상자의 번호와 같습니다.</Text>
         <Table
           columns={["번호", "Moonlight AI 요약 내용", "판정"]}
           rows={Object.entries(NOTES).map(([id, note]) => [
@@ -303,7 +303,7 @@ export default function App() {
             note.verdict === "해석" ? note.verdict : { text: note.verdict, tone: note.verdict === "틀림" ? "danger" : "warning" },
           ])}
         />
-        <Section heading="원문과 대조해 맞은 요약 내용 (16개)">
+        <Section heading="원문과 대조해 맞은 Moonlight AI 요약 내용 (16개)">
           <Table
             columns={["#", "Moonlight AI 요약 내용", "원문 위치"]}
             rows={[

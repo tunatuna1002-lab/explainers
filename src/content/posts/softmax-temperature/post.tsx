@@ -49,7 +49,7 @@ export default function App() {
 
       <Section heading="softmax의 정의" id="def">
         <Text>
-          softmax(소프트맥스, 점수 묶음을 확률 묶음으로 바꾸는 함수)는 각 점수에 지수를 취합니다. 그다음 전체 합으로 나눕니다.
+          softmax(소프트맥스, 점수 묶음을 확률 묶음으로 바꾸는 함수)는 각 점수에 지수(exponential, e를 밑으로 하는 거듭제곱)를 취합니다. 그다음 전체 합으로 나눕니다.
         </Text>
         <Tex display>{"p_i = \\frac{e^{z_i / T}}{\\sum_j e^{z_j / T}}"}</Tex>
         <Text>

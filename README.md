@@ -1,6 +1,6 @@
 # explainers
 
-> 새 글·디자인 작업 전에 [docs/DESIGN_FEEDBACK.md](docs/DESIGN_FEEDBACK.md)를 먼저 확인한다.
+> 새 글·디자인 작업 전에 [docs/DESIGN_FEEDBACK.md](docs/DESIGN_FEEDBACK.md)를, 글을 쓰거나 고치기 전에 [docs/WRITING_STYLE.md](docs/WRITING_STYLE.md)를 먼저 확인한다.
 
 공부하며 질문한 내용을 그림과 예시로 풀어 쓴 설명글 사이트. Grok Bot이 만든 설명 Page(React/TSX, `grok/canvas` 키트)를 같은 디자인의 정적 사이트 글로 옮겨 싣는다.
 

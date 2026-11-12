@@ -652,7 +652,7 @@ function Quiz({ items, idPrefix }: { items: readonly QuizItem[]; idPrefix: strin
               aria-live="polite"
               style={{ margin: 0, minHeight: "1.5em", ...theme.font.subtext, ...(chosen === null ? theme.font.body2 : {}), color: chosen === null ? theme.text.tertiary : right ? theme.text.successDeep : theme.text.dangerDeep }}
             >
-              {chosen === null ? "답을 고르면 해설이 나옵니다." : `${right ? "정답입니다. " : "다시 확인해 보세요. "}${it.why}`}
+              {chosen === null ? "답을 고르면 해설이 나옵니다." : `${right ? "정답입니다. " : "오답입니다. "}${it.why}`}
             </p>
           </div>
         );
@@ -663,21 +663,21 @@ function Quiz({ items, idPrefix }: { items: readonly QuizItem[]; idPrefix: strin
 
 const QUIZ: QuizItem[] = [
   {
-    q: "논문에서 남길 확률 p가 0.8이면, PyTorch nn.Dropout의 p에는 무엇을 넣나요? (논문 밖)",
+    q: "논문에서 남길 확률 p가 0.8이면, PyTorch nn.Dropout의 p에는 무엇을 넣습니까? (논문 밖)",
     choices: ["0.8", "0.2", "1.25"],
     answer: 1,
     why: "PyTorch의 p는 끌 확률이므로 1 - 0.8 = 0.2입니다. (논문 밖)",
     source: "논문의 p 정의: p.2, §1 · API 연결은 논문 밖",
   },
   {
-    q: "켜고 끌 수 있는 뉴런이 4개라면, 가능한 마스크는 몇 가지인가요? (예시 값)",
+    q: "켜고 끌 수 있는 뉴런이 4개라면, 가능한 마스크는 몇 가지입니까? (예시 값)",
     choices: ["4가지", "8가지", "16가지"],
     answer: 2,
     why: "뉴런마다 켜짐과 꺼짐 두 가지이므로 2 × 2 × 2 × 2 = 16가지입니다.",
     source: "p.3, §1",
   },
   {
-    q: "논문 방식에서 테스트 때 가중치에 p를 곱하는 이유는 무엇인가요?",
+    q: "논문 방식에서 테스트 때 가중치에 p를 곱하는 이유는 무엇입니까?",
     choices: [
       "고정된 활성값이 다음 층에 보내는 선형 입력의 평균 크기를 맞추려고",
       "모든 학습 실행의 결과를 똑같이 만들려고",
@@ -772,7 +772,7 @@ export default function App() {
   return (
     <Page
       title="Dropout 쉽게 보기 (Srivastava 외, 2014)"
-      summary="드롭아웃은 학습 때 뉴런을 무작위로 꺼서 매번 다른 얇은 망을 학습하고, 테스트 때는 모두 켠 채 가중치에 p(남길 확률)를 곱해 그 많은 망의 평균을 한 번에 흉내 내는 방법입니다. 뉴런 n개에서 나오는 얇은 망 2^n개를 세어 보고, 학습 때 1/p로 키우는 방식(PyTorch 기본)과도 비교합니다."
+      summary="드롭아웃은 학습 때 뉴런을 무작위로 꺼서 매번 다른 얇은 망을 학습하는 방법입니다. 테스트 때는 뉴런을 모두 켠 채 가중치에 p(남길 확률)를 곱해, 그 많은 망의 평균을 한 번에 흉내 냅니다. 뉴런 n개에서 나오는 얇은 망 2^n개를 세어 보고, 학습 때 1/p로 키우는 방식(PyTorch 기본)과도 비교합니다."
       width="column"
       lang="ko"
     >
@@ -824,7 +824,7 @@ export default function App() {
         </Text>
         <Text>
           p 슬라이더를 움직이면 평균적으로 남는 뉴런 수가 바뀝니다. p가 1.0이면 아무것도 끄지 않으므로 드롭아웃이 없는 망과 같습니다.
-          이 그림은 은닉층만 끄고 입력과 출력은 고정합니다. 가중치를 실제로 학습하지는 않습니다.
+          이 그림에서는 은닉층만 끄고 입력과 출력은 고정합니다. 가중치를 실제로 학습하지는 않습니다.
         </Text>
       </Section>
 
@@ -835,7 +835,7 @@ export default function App() {
         </Text>
         <CountLab />
         <Text>
-          켜짐과 꺼짐이 모두 가능한 확률에서 센 조합입니다. 모두 꺼지는 조합도 포함합니다. 각 조합이 나올 확률이 모두 같은 것은 p가
+          뉴런마다 켜짐과 꺼짐이 모두 나올 수 있다고 보고 센 조합입니다. 모두 꺼지는 조합도 포함합니다. 각 조합이 나올 확률이 모두 같은 것은 p가
           0.5일 때뿐입니다.
         </Text>
         <Callout lead="망이 2^n개 따로 있다는 뜻은 아닙니다" tone="info">
@@ -860,7 +860,7 @@ export default function App() {
           ]}
         />
         <Text>
-          "근사"라는 말이 중요합니다. 드롭아웃은 진짜 평균을 계산하지 않습니다. 가중치 × p는 평균을 흉내 내는 지름길입니다 (p.3).
+          드롭아웃은 얇은 망들의 진짜 평균을 계산하지 않습니다. 가중치에 p를 곱한 망 하나로 그 평균을 근사합니다 (p.3).
         </Text>
         <Text>아래 막대는 MNIST 손글씨 숫자 테스트 오류율입니다 (p.9, §6.1.1, 표 2). 낮을수록 좋습니다.</Text>
         <Bars
@@ -874,12 +874,12 @@ export default function App() {
           ]}
         />
         <Text>
-          0.95% 망은 파라미터가 6,500만 개 이상이고, 학습 데이터는 6만 장입니다. 데이터보다 훨씬 큰 망도 드롭아웃과 함께라면 과적합을 덜 했다고 볼 수 있습니다 (추정).
+          0.95% 망은 매개변수가 6,500만 개 이상이고, 학습 데이터는 6만 장입니다. 데이터보다 훨씬 큰 망도 드롭아웃과 함께라면 과적합을 덜 했다고 볼 수 있습니다 (추정).
           CIFAR-10은 14.98%에서 12.61%로, CIFAR-100은 43.48%에서 37.20%로 오류율이 줄었습니다 (p.10, 표 4).
         </Text>
         <Text>
           큰 사진 분류에서도 같은 결과가 나옵니다. 이 논문은 ImageNet(ILSVRC-2010) 결과로 "Conv Net + dropout (Krizhevsky et al.,
-          2012)"의 top-5 오류율 17.0%를 싣습니다 (p.12, §6.1.4, 표 5). 이 망이 AlexNet입니다. AlexNet은 완전연결층 두 개에
+          2012)"의 top-5 오류율 17.0%를 싣습니다 (p.12, §6.1.4, 표 5). 이 망이 AlexNet입니다. AlexNet은 완전연결층(fully-connected layer, 앞 층의 모든 뉴런과 이어진 층) 두 개에
           드롭아웃을 썼습니다. 자세한 구조와 드롭아웃을 쓴 위치는{" "}
           <a href="/posts/alexnet-imagenet-classification/">AlexNet 쉽게 보기</a>에서 직접 움직여 볼 수 있습니다.
         </Text>
@@ -897,7 +897,7 @@ export default function App() {
         </Text>
         <ScaleLab />
         <Callout lead="코드의 p는 뜻이 반대입니다 (논문 밖)" tone="danger">
-          PyTorch nn.Dropout(p)의 p는 "지울" 확률입니다. 논문의 p는 "남길" 확률입니다. PyTorch는 학습 때 남은 값을 1/(1-p)배로 키우므로
+          PyTorch nn.Dropout(p)의 p는 "끌" 확률입니다. 논문의 p는 "남길" 확률입니다. PyTorch는 학습 때 남은 값을 1/(1-p)배로 키우므로
           테스트 때 곱하지 않습니다. 논문 기호로 쓰면 위의 1/p 확대 방식과 같습니다.
         </Callout>
         <Text>
@@ -958,7 +958,7 @@ export default function App() {
         <Text>앞의 그림에서 확인한 내용으로 답해 보십시오. 고르면 바로 해설이 나옵니다.</Text>
         <Quiz items={QUIZ} idPrefix="do-quiz" />
         <Callout lead="한 걸음 더: 말로 답하는 질문" tone="info">
-          테스트 때 뉴런을 모두 켜면서 가중치에 p를 곱하지 않으면, 다음 층이 받는 값은 어떻게 될까요? 그 결과 어떤 문제가 생길까요?
+          테스트 때 뉴런을 모두 켜면서 가중치에 p를 곱하지 않으면, 다음 층이 받는 값은 어떻게 됩니까? 그 결과 어떤 문제가 생깁니까?
           먼저 말로 답해 본 뒤 아래를 읽으십시오.
         </Callout>
         <Text>

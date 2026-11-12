@@ -18,7 +18,7 @@ import {
 
 const TITLE = "Word2Vec 시각화 학습실";
 const SUMMARY =
-  "CBOW와 Skip-gram이 학습 쌍을 만드는 방향, Skip-gram이 먼 단어를 덜 뽑는 규칙, 왕 − 남자 + 여자 같은 벡터 연산, NNLM과 비교한 계산 비용(논문 식 2·4·5)을 직접 조작하며 이해합니다. 조작 화면의 값은 모두 예시이며 실제 학습 결과가 아닙니다.";
+  "CBOW와 Skip-gram이 학습 쌍을 만드는 방향, Skip-gram이 먼 단어를 덜 뽑는 규칙, 왕 − 남자 + 여자 같은 벡터 연산, NNLM(신경망 언어모델)과 비교한 계산 비용(논문 식 2·4·5)을 직접 조작하며 이해합니다. 조작 화면의 값은 모두 예시이며 실제 학습 결과가 아닙니다.";
 
 const ARXIV = "https://arxiv.org/abs/1301.3781v3";
 const QA_POST = "../word2vec-efficient-estimation/";
@@ -66,7 +66,7 @@ const RESULTS = [
 
 const QUIZZES = [
   {
-    q: "Skip-gram이 문장에서 멀리 있는 단어를 덜 뽑는 이유를 가장 정확하게 말한 것은 무엇인가요?",
+    q: "Skip-gram이 문장에서 멀리 있는 단어를 덜 뽑는 이유를 가장 정확하게 말한 것은 무엇입니까?",
     a: [
       "멀리 있는 단어는 언제나 의미가 없다.",
       "가까운 단어를 더 자주 학습하도록 가중한 것이다.",
@@ -76,7 +76,7 @@ const QUIZZES = [
     why: "문장 속 거리에 따른 표본 선택 규칙이며, 모든 문장의 관계를 판정하는 법칙은 아닙니다. (p.4~5, §3.2)",
   },
   {
-    q: "NNLM에도 계층적 소프트맥스를 적용했습니다. CBOW가 추가로 줄이는 큰 계산은 무엇인가요?",
+    q: "NNLM에도 계층적 소프트맥스를 적용했습니다. CBOW가 추가로 줄이는 큰 계산은 무엇입니까?",
     a: [
       "단어 벡터를 읽는 N×D 계산",
       "비선형 은닉층으로 가는 N×D×H 계산",
@@ -214,7 +214,7 @@ export default function App() {
   const costV = 2 ** costVExp;
   const costs = costsOf(costN, costD, costH, costV, costC, hierarchical);
   const costNames = [
-    `NNLM · ${hierarchical ? "계층적 출력" : "일반 출력"}`,
+    `NNLM · ${hierarchical ? "계층적 소프트맥스" : "소프트맥스"}`,
     "CBOW",
     "Skip-gram",
   ];
@@ -365,7 +365,7 @@ export default function App() {
         : "이 벡터로 주변 단어를 각각 예측합니다.",
     },
     {
-      current: isCbow ? "입력은 문맥 벡터의 평균입니다." : "입력은 가운데 단어의 벡터입니다.",
+      current: isCbow ? "입력은 주변 단어 벡터의 평균입니다." : "입력은 가운데 단어의 벡터입니다.",
       rule: isCbow ? "가운데 단어를 분류합니다." : "주변 단어를 하나씩 분류합니다.",
       next: isCbow
         ? `정답 ‘${centerWord}’와 예측을 비교합니다.`
@@ -374,7 +374,7 @@ export default function App() {
     {
       current: "예측과 정답을 비교합니다.",
       rule: "비교 결과를 이용해 단어 벡터를 조정합니다.",
-      next: "다음 학습 위치에서도 같은 과정을 반복합니다.",
+      next: "다음 가운데 단어에서도 같은 과정을 반복합니다.",
     },
   ] as const;
   const activeStage = stages[stage] ?? stages[0];
@@ -450,7 +450,7 @@ export default function App() {
         <a href={ARXIV}>arXiv:1301.3781v3</a>. 글 속 쪽수(p.)는 이 PDF의 인쇄 쪽수입니다.
       </Text>
       <Text>
-        이 논문의 핵심은 단어의 의미적 관계를 숫자 벡터에 학습시키면서 계산 비용을 줄이는 것입니다.
+        이 논문은 단어의 의미적 관계를 숫자 벡터에 학습시키면서 계산 비용을 줄이는 방법을 제안합니다.
         아래 조작 화면은 학습 데이터를 만드는 규칙과 논문 식을 직접 계산합니다. 단어 벡터를 실제로
         학습하거나 모델 성능을 측정하지는 않습니다.
       </Text>
@@ -458,8 +458,7 @@ export default function App() {
       <Section id="models" heading="CBOW와 Skip-gram의 차이">
         <Text>
           CBOW는 주변 단어를 보고 가운데 단어를 맞힙니다. Skip-gram은 가운데 단어를 보고 주변 단어를
-          맞힙니다. 두 모델은 학습할 때 정답으로 삼는 단어의 방향이 반대입니다. (p.4, §3.1~3.2 · p.5,
-          그림 1)
+          맞힙니다. (p.4, §3.1~3.2 · p.5, 그림 1)
         </Text>
 
         <div style={styles.stack}>
@@ -479,7 +478,7 @@ export default function App() {
 
           {renderSlider({
             id: "w2v-context",
-            label: "한쪽 최대 창 크기 C",
+            label: "한쪽 최대 거리 C",
             value: pairC,
             min: 1,
             max: 5,
@@ -495,7 +494,7 @@ export default function App() {
             단어를 누르면 그 단어가 가운데(중심) 단어가 됩니다. 공백으로 나눈 설명용 토큰입니다.
           </Callout>
 
-          <div style={styles.wrap} role="group" aria-label="중심 단어 고르기">
+          <div style={styles.wrap} role="group" aria-label="가운데 단어 고르기">
             {WORDS.map((word, index) => {
               const isCenter = index === center;
               const inContext = context.some((item) => item.index === index);
@@ -504,7 +503,7 @@ export default function App() {
                   key={word}
                   type="button"
                   aria-pressed={isCenter}
-                  aria-label={`${word}: ${isCenter ? "중심 단어" : inContext ? "선택한 주변 단어" : "제외"}`}
+                  aria-label={`${word}: ${isCenter ? "가운데 단어" : inContext ? "선택한 주변 단어" : "제외"}`}
                   onClick={() => {
                     setCenter(index);
                     setStage(0);
@@ -521,7 +520,7 @@ export default function App() {
           </div>
 
           <div style={{ ...styles.wrap, ...styles.small }}>
-            <span style={{ color: theme.text.accent }}>중심 단어</span>
+            <span style={{ color: theme.text.accent }}>가운데 단어</span>
             <span style={{ color: theme.text.success }}>입력 또는 정답에 쓰이는 주변 단어</span>
             <span style={{ color: theme.text.tertiary }}>제외</span>
           </div>
@@ -535,7 +534,7 @@ export default function App() {
               }}
               style={buttonStyle()}
             >
-              다음 중심 단어
+              다음 가운데 단어
             </button>
             <button type="button" onClick={resetPairs} style={buttonStyle()}>
               초기화
@@ -555,7 +554,7 @@ export default function App() {
                   }}
                   style={checkboxStyle}
                 />
-                무작위로 줄인 창 R 적용 (논문 Skip-gram 방식)
+                무작위로 뽑은 범위 R 적용 (논문 Skip-gram 방식)
               </label>
               <div style={styles.wrap}>
                 <button
@@ -569,7 +568,7 @@ export default function App() {
                 <span style={styles.small}>
                   {sampled
                     ? `이번 R = ${pairRadius} (1~${pairC}에서 균등하게 뽑았다고 가정)`
-                    : `최대 창 C = ${pairC}의 후보 전체`}
+                    : `최대 거리 C = ${pairC}의 후보 전체`}
                 </span>
               </div>
             </div>
@@ -577,11 +576,11 @@ export default function App() {
 
           <div style={{ ...styles.box, ...styles.stack, gap: 8 }} aria-live="polite">
             <div style={styles.label}>
-              {isCbow ? "주변 벡터의 평균 → 중심 단어" : "중심 단어 → 주변 단어 각각"} (예시 · 학습 쌍
+              {isCbow ? "주변 단어 벡터의 평균 → 가운데 단어" : "가운데 단어 → 주변 단어 각각"} (예시 · 학습 쌍
               생성)
             </div>
             <div style={styles.small}>
-              중심: {centerWord} · 주변 {context.length}단어 · 학습 항목 {isCbow ? 1 : context.length}개
+              가운데 단어: {centerWord} · 주변 {context.length}단어 · 학습 항목 {isCbow ? 1 : context.length}개
             </div>
             <div style={styles.scroll}>
               <Table
@@ -681,15 +680,15 @@ export default function App() {
         </div>
 
         <Text>
-          창 크기 조절은 설명용입니다. 원문에서 CBOW가 가장 좋았던 설정은 앞 4단어와 뒤 4단어를 입력으로
+          한쪽 최대 거리 C 조절은 설명용입니다. 원문에서 CBOW가 가장 좋았던 설정은 앞 4단어와 뒤 4단어를 입력으로
           쓰는 것입니다. (p.4, §3.1) 이 화면은 학습 데이터를 만들 뿐이며 단어 벡터를 실제로 학습하지는
           않습니다.
         </Text>
       </Section>
 
-      <Section id="sampling" heading="Skip-gram은 왜 먼 단어를 덜 학습할까요?">
+      <Section id="sampling" heading="Skip-gram이 먼 단어를 덜 학습하는 이유">
         <Text>
-          Skip-gram은 학습 위치마다 범위 R을 1부터 C 사이에서 무작위로 고릅니다. 그리고 앞 R단어와 뒤
+          Skip-gram은 가운데 단어마다 범위 R을 1부터 C 사이에서 무작위로 고르고, 앞 R단어와 뒤
           R단어를 정답으로 씁니다. 거리 k의 단어는 R이 k 이상일 때만 선택됩니다. 원문은 예로 C = 5를
           들고, 실험에서는 C = 10을 썼습니다. (p.4~5, §3.2)
         </Text>
@@ -744,7 +743,7 @@ export default function App() {
 
           <div
             style={{ ...styles.wrap, justifyContent: "center" }}
-            aria-label="중심에서의 거리와 이번 문맥 선택"
+            aria-label="가운데 단어에서의 거리와 이번 문맥 선택"
           >
             {Array.from({ length: 2 * distC + 1 }, (_, i) => i - distC).map((position) => {
               const isCenter = position === 0;
@@ -759,13 +758,13 @@ export default function App() {
                   }}
                   aria-label={
                     isCenter
-                      ? "중심 단어"
+                      ? "가운데 단어"
                       : `${position < 0 ? "앞쪽" : "뒤쪽"} 거리 ${Math.abs(position)}, ${
                           chosen ? "선택" : "제외"
                         }${observed ? ", 관찰 중" : ""}`
                   }
                 >
-                  {isCenter ? "중심" : `${Math.abs(position)}${observed ? " ●" : ""}`}
+                  {isCenter ? "가운데" : `${Math.abs(position)}${observed ? " ●" : ""}`}
                 </span>
               );
             })}
@@ -819,7 +818,7 @@ export default function App() {
               />
             </div>
             <div style={styles.label}>
-              중심 단어당 평균 학습 쌍 수: {formatNumber(expectedPairs)}개
+              가운데 단어당 평균 학습 쌍 수: {formatNumber(expectedPairs)}개
             </div>
             <div style={styles.small}>
               문장 양쪽에 단어가 충분히 있을 때의 계산입니다. 같은 거리의 왼쪽·오른쪽 단어는 각각 이 비율로
@@ -835,8 +834,8 @@ export default function App() {
         </div>
 
         <Text>
-          C = 10이면 거리 10의 단어는 R이 10일 때만 선택됩니다. 비율은 10%입니다. 거리 1의 단어는 모든
-          R에 포함됩니다. 비율은 100%입니다.
+          C = 10이면 거리 10의 단어는 R이 10일 때만 선택되므로 비율이 10%입니다. 거리 1의 단어는
+          모든 R에 포함되므로 비율이 100%입니다.
         </Text>
 
         <Callout lead="이번 선택과 선택 비율은 다릅니다" tone="info">
@@ -845,16 +844,16 @@ export default function App() {
         </Callout>
 
         <Text>
-          이 비율은 ‘단어가 관련될 확률’이 아닙니다. 거리와 실제 의미적 관련성을 매번 계산한 결과도
-          아닙니다. 원문은 먼 단어가 대체로 덜 관련되므로 덜 뽑아 가중치를 낮춘다고 설명합니다. 즉 거리별
-          학습 빈도를 정한 설계 규칙입니다. 먼 단어가 중요한 문장도 있으므로 이 규칙에는 한계가 있습니다.
+          이 비율은 거리별 학습 빈도를 정한 설계 규칙에서 나옵니다. ‘단어가 관련될 확률’이 아니고, 거리와
+          실제 의미적 관련성을 매번 계산한 결과도 아닙니다. 원문은 먼 단어가 대체로 덜 관련되므로 덜 뽑아
+          가중치를 낮춘다고 설명합니다. 먼 단어가 중요한 문장도 있으므로 이 규칙에는 한계가 있습니다.
           (p.4, §3.2)
         </Text>
       </Section>
 
-      <Section id="vectors" heading="단어 벡터는 어떻게 의미를 갖게 될까요?">
+      <Section id="vectors" heading="단어 벡터가 의미를 갖게 되는 과정">
         <Text>
-          처음부터 컴퓨터가 ‘고양이’의 뜻을 알고 있는 것은 아닙니다. 단어는 학습 과정에서 숫자
+          컴퓨터는 처음에 ‘고양이’의 뜻을 모릅니다. 단어는 학습 과정에서 숫자
           벡터(숫자 목록)로 표현됩니다.
         </Text>
 
@@ -942,7 +941,7 @@ export default function App() {
           </figcaption>
         </figure>
 
-        <Section heading="왜 고양이와 강아지가 가까워질 수 있을까요?">
+        <Section heading="고양이와 강아지가 가까워질 수 있는 이유">
           <Text>
             두 단어가 비슷한 문맥에서 자주 나타나면, 학습 과정에서 비슷한 관계를 표현하도록 벡터가 조정될
             수 있습니다.
@@ -1061,7 +1060,7 @@ export default function App() {
               ))}
             </svg>
             <figcaption style={styles.small}>
-              점을 끌거나 아래 슬라이더를 움직이세요. 결과점까지 들어오도록 축 범위가 자동으로 바뀝니다. 파란
+              점을 끌거나 아래 슬라이더를 움직이십시오. 결과점까지 들어오도록 축 범위가 자동으로 바뀝니다. 파란
               점은 입력 단어, 초록 점은 후보 단어입니다.
             </figcaption>
           </figure>
@@ -1151,7 +1150,7 @@ export default function App() {
         </Section>
       </Section>
 
-      <Section id="cost" heading="비선형 은닉층을 제거하면 얼마나 저렴해질까요?">
+      <Section id="cost" heading="비선형 은닉층을 없앨 때 줄어드는 계산량">
         <Text>
           원문은 계산 복잡도를 모델 학습에 접근해야 하는 매개변수 수로 정의하고, 학습 단어 하나당 비용 Q로 모델을 비교합니다. (p.2, §2) 아래
           슬라이더 값은 예시이며, 논문 식에 직접 대입합니다. (p.3, 식 (2) · p.4, 식 (4)~(5))
@@ -1253,8 +1252,8 @@ export default function App() {
 
           <div style={styles.small}>
             {hierarchical
-              ? "현재 NNLM: N×D + N×D×H + H×log₂(V). 원문 식 (2)의 출력 항에 §2.1의 계층적 출력을 대입한 설명용 식입니다."
-              : "현재 NNLM: 원문 식 (2)를 그대로 사용합니다. CBOW·Skip-gram 식은 계층적 출력을 포함합니다."}{" "}
+              ? "현재 NNLM: N×D + N×D×H + H×log₂(V). 원문 식 (2)의 출력 항에 §2.1의 계층적 소프트맥스를 대입한 설명용 식입니다."
+              : "현재 NNLM: 원문 식 (2)를 그대로 사용합니다. CBOW·Skip-gram 식은 계층적 소프트맥스를 포함합니다."}{" "}
             N은 NNLM에서는 앞쪽 입력 단어 수, CBOW에서는 양쪽 입력의 총수입니다. C는 한쪽 최대 거리이므로
             N과 따로 조절합니다.
           </div>
@@ -1273,11 +1272,11 @@ export default function App() {
 
         <Section heading="식과 실제 구현의 차이">
           <Text>
-            log₂(V)는 균형 이진 트리의 경로 길이를 근사합니다. 원문 모델은 허프먼 트리(자주 나오는 단어에
+            log₂(V)는 균형 이진 트리의 경로 길이를 근사합니다. 원문 모델은 허프만 트리(자주 나오는 단어에
             짧은 코드를 주는 트리)를 쓰므로 단어 빈도에 따라 경로 길이가 다릅니다. (p.3, §2.1)
           </Text>
           <Text>
-            식 (5)는 복잡도가 비례하는 형태입니다. 실제로 뽑힌 학습 쌍은 문장 경계가 없으면 R × 2개입니다.
+            식 (5)는 복잡도에 비례하는 양을 나타냅니다. 실제로 뽑힌 학습 쌍은 문장 경계가 없으면 R × 2개입니다.
             (p.5, §3.2) 위 식을 정확한 연산 횟수로 해석하면 안 됩니다.
           </Text>
           <Text>
@@ -1289,15 +1288,15 @@ export default function App() {
         <Text>
           기존 NNLM은 N×D×H에 해당하는 비선형 은닉층 계산이 큰 병목이었습니다. H는 은닉층 크기입니다.
           원문은 계층적 소프트맥스를 쓰면 복잡도 대부분이 N×D×H 항에서 나온다고 씁니다. CBOW와 Skip-gram은
-          그 층을 제거했습니다. 덕분에 더 큰 학습 데이터와 벡터 차원을 사용할 수 있었습니다. (p.3~4, 식
+          그 층을 제거해 더 큰 학습 데이터와 벡터 차원을 사용할 수 있었습니다. (p.3~4, 식
           (2)·(4)·(5))
         </Text>
       </Section>
 
-      <Section id="results" heading="실제 실험은 어떤 결과였을까요?">
+      <Section id="results" heading="실제 실험 결과">
         <Text>
-          동일한 학습량과 벡터 차원의 정확도 비교입니다. 320M 학습 단어를 사용했습니다. 벡터는
-          640차원입니다. 단위는 %입니다. (원문 p.7, 표 3)
+          동일한 학습량(학습 단어 320M)과 벡터 차원(640차원)에서 비교한 정확도입니다. 단위는
+          %입니다. (원문 p.7, 표 3)
         </Text>
 
         <figure style={{ ...styles.box, ...styles.stack, margin: 0 }}>
@@ -1346,9 +1345,8 @@ export default function App() {
         </Text>
 
         <Callout lead="표 4는 학습량이 같지 않습니다" tone="warning">
-          NNLM은 6B 단어를 사용했습니다. CBOW와 Skip-gram은 783M 단어를 사용했습니다. Moonlight 요약에서는
-          이 조건을 잘못 읽었습니다. 서로 다른 실험 조건을 동일 조건의 승부로 해석하면 안 됩니다. (원문
-          p.8, 표 4)
+          NNLM은 6B 단어를, CBOW와 Skip-gram은 783M 단어를 사용했습니다. Moonlight AI 요약에서는 이 조건을
+          잘못 읽었습니다. 조건이 다른 결과를 같은 조건의 비교로 해석하면 안 됩니다. (원문 p.8, 표 4)
         </Callout>
       </Section>
 
@@ -1359,8 +1357,8 @@ export default function App() {
         </Text>
 
         <Callout lead="문제 1" tone="info">
-          어느 모델이 주변 단어 네 개로 ‘고양이를’ 예측할까요? 어느 모델이 ‘고양이를’ 하나로 주변 단어 네
-          개를 예측할까요?
+          어느 모델이 주변 단어 네 개로 ‘고양이를’ 예측합니까? 어느 모델이 ‘고양이를’ 하나로 주변 단어 네
+          개를 예측합니까?
         </Callout>
 
         <button
@@ -1433,9 +1431,9 @@ export default function App() {
         </div>
 
         <Text>
-          다음 연결고리는 어텐션(Attention)입니다. CBOW는 문맥 벡터를 평균합니다. Skip-gram은 거리에 따라
-          주변 단어의 학습 빈도를 다르게 만듭니다. 이후 어텐션 논문에서는 문맥의 각 단어가 얼마나 중요한지를
-          입력에 따라 계산하는 방식을 살펴보면 됩니다.
+          CBOW는 주변 단어 벡터를 평균하고, Skip-gram은 거리에 따라 주변 단어의 학습 빈도를 다르게
+          만듭니다. 다음에 볼 어텐션(Attention) 논문에서는 문맥의 각 단어가 얼마나 중요한지를 입력에 따라
+          계산하는 방식을 살펴보면 됩니다.
         </Text>
 
         <Text>

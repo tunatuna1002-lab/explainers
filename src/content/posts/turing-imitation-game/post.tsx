@@ -246,7 +246,7 @@ export default function App() {
   return (
     <Page
       title="튜링 이미테이션 게임"
-      summary="요약: (1) Turing(1950)을 Moonlight로 읽으며 물은 8개 질문을 논문 위치, 질문, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 답변에서 틀린 곳은 6개입니다: 용량 환산, 70% 검증 현황, 튜링의 용량 가정, 게재 권호, 1939년 강의 청강 여부와 주제. (3) Q7에서 나온 연구 질문 3개(1939년 강의, 검증 vs 반증, ESP 반론)는 후속 조사로 따로 정리했습니다."
+      summary="요약: (1) Turing(1950)을 Moonlight로 읽으며 물은 8개 질문을 논문 위치, 답변 요약과 함께 정리하고, 원문과 대조해 검증했습니다. (2) Moonlight AI 답변에서 틀린 곳 6개는 용량 환산, 70% 검증 현황, 튜링의 용량 가정, 게재 권호, 1939년 강의 청강 여부와 주제입니다. (3) Q7에서 나온 연구 질문 3개(1939년 강의, 검증 vs 반증, ESP 반론)는 후속 조사로 따로 정리했습니다."
       width="column"
       lang="ko"
     >
@@ -274,7 +274,7 @@ export default function App() {
           ]}
         />
         <Text>
-          Q&A마다 내 질문, 논문 위치, 선택한 원문, Moonlight AI 답변 요약, 검증 결과를 적었다. 검증은 튜링 원문(UMBC PDF), Oxford의 게재 정보, 웹 출처와 대조했다. AI 답변 중 문제가 있는 문장은 바로 아래 상자에 판정과 함께 적었다.
+          Q&A마다 내 질문, 논문 위치, 선택한 원문, Moonlight AI 답변 요약, 검증 결과를 적었습니다. 튜링 원문(UMBC PDF), Oxford의 게재 정보, 웹 출처와 대조해 검증했습니다. Moonlight AI 답변 중 문제가 있는 문장은 각 Q&A 바로 아래 상자에 판정과 함께 적었습니다.
         </Text>
         <Table
           columns={["판정", "뜻"]}
@@ -289,14 +289,14 @@ export default function App() {
       </Section>
 
       <Section heading="Q&A 1: 문장을 짚어 물은 질문 (Q1–Q4)" id="qa-thread">
-        <Text>논문의 문장을 선택해 물은 질문이다. Q2–Q4는 한 스레드에서 이어서 물었다.</Text>
+        <Text>논문의 문장을 선택해 물은 질문입니다. Q2–Q4는 한 스레드에서 이어서 물었습니다.</Text>
         {QAS.slice(0, 4).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
       </Section>
 
       <Section heading="Q&A 2: 논문 전체에 대해 물은 질문 (Q5–Q8)" id="qa-discuss">
-        <Text>오른쪽 사이드바의 토론 창에서 논문 전체를 두고 물은 질문이다.</Text>
+        <Text>오른쪽 사이드바의 토론 창에서 논문 전체를 두고 물은 질문입니다.</Text>
         {QAS.slice(4).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
@@ -321,18 +321,18 @@ export default function App() {
         </Section>
         <Section heading="언어 게임 해석과 닮은 부분 (정황 증거)">
           <Text>
-            비트겐슈타인은 『청색 책』(1933–34)에서 "기계가 생각한다"는 문장이 어딘가 무의미해 보인다고 썼습니다(<a href={SRC.shanker}>Shanker, Notre Dame Journal of Formal Logic</a>). 『철학적 탐구』 §359–360에서는 우리는 인간과 인간을 닮은 것에 대해서만 "생각한다"고 말한다고 했습니다(<a href={SRC.pi}>PhilArchive</a>).
+            비트겐슈타인은 『청색 책』(1933–34)에서 "기계가 생각한다"는 문장이 어딘가 무의미해 보인다고 썼습니다(<a href={SRC.shanker}>Shanker, Notre Dame Journal of Formal Logic</a>). 『철학적 탐구』 §359–360에서는 우리가 인간과 인간을 닮은 것에 대해서만 "생각한다"고 말한다고 했습니다(<a href={SRC.pi}>PhilArchive</a>).
           </Text>
           <Text>
-            튜링은 1950년 논문에서 이렇게 썼습니다. "기계가 생각할 수 있는가"라는 원래 질문은 "too meaningless to deserve discussion(논의할 가치가 없을 만큼 무의미하다)". 그러면서 세기말에는 "the use of words ... will have altered(단어 사용이 바뀔 것)"이라고 예측했습니다. 질문을 단어 사용의 문제로 본다는 점이 비트겐슈타인과 매우 닮았습니다.
+            튜링도 질문을 단어 사용의 문제로 봤다는 점에서 비트겐슈타인과 매우 닮았습니다. 1950년 논문에서 튜링은 "기계가 생각할 수 있는가"라는 원래 질문이 "too meaningless to deserve discussion(논의할 가치가 없을 만큼 무의미하다)"라고 썼습니다. 그러면서 세기말에는 "the use of words ... will have altered(단어 사용이 바뀔 것)"이라고 예측했습니다.
           </Text>
         </Section>
         <Section heading="학계 견해는 갈립니다">
           <Text>
-            Hodges(1999)는 비트겐슈타인이 튜링에게 영향을 주었다는 직접 증거가 없고, 1939년 강의는 튜링의 마음·기계 관점을 "전혀 밝혀주지 않는다"고 봅니다(<a href={SRC.floyd2016}>Floyd 2016</a>). Floyd도 직접 증거가 없다는 점은 인정합니다. 대신 "상식(common sense)"과 "어법(phraseology)"이라는 케임브리지 전통을 통한 정황적 재구성을 내놓습니다.
+            Hodges(1999)는 비트겐슈타인이 튜링에게 영향을 주었다는 직접 증거가 없고, 1939년 강의는 튜링의 마음·기계 관점을 "전혀 밝혀주지 않는다"고 봅니다(<a href={SRC.floyd2016}>Floyd 2016</a>). Floyd도 직접 증거가 없다는 점은 인정합니다. 대신 "상식(common sense)"과 "어법(phraseology)"이라는 케임브리지 전통을 통해 정황을 재구성합니다.
           </Text>
           <Text>
-            Proudfoot는 튜링의 기준을 반응 의존적(response-dependence) 기준으로 해석합니다(<a href={SRC.proudfoot}>Proudfoot, Minds and Machines 2020</a>). 또 튜링과 비트겐슈타인의 마음 철학이 근본적으로 달랐다는 통념을 "신화"라고 비판합니다(<a href={SRC.myths}>Proudfoot 2025</a>).
+            Proudfoot는 튜링의 기준을 반응 의존(response-dependence) 기준으로 해석합니다(<a href={SRC.proudfoot}>Proudfoot, Minds and Machines 2020</a>). 또 튜링과 비트겐슈타인의 마음 철학이 근본적으로 달랐다는 통념을 "신화"라고 비판합니다(<a href={SRC.myths}>Proudfoot 2025</a>).
           </Text>
         </Section>
         <Section heading="아직 확인하지 못한 것">
@@ -345,20 +345,20 @@ export default function App() {
       <Section heading="후속 조사 2: 검증가능성 vs 반증가능성" id="falsifiability">
         <Text>Q7 답변 끝의 연구 질문 2: 튜링 테스트는 검증 기준인가 반증 기준인가? 기계가 실패해도 "더 큰 기계"를 상상할 수 있어 반증이 안 된다면, 이 테스트는 Popper적 의미에서 과학적인가? (v12와 관련)</Text>
         <Callout lead="결론">
-          기준으로서의 튜링 테스트는 한 방향으로만 작동합니다(통과는 증거가 되지만 실패는 반증이 되지 않음). 반면 논문 속 튜링의 예측은 명확하게 반증 가능한 가설이었고, 실제로 시험을 거쳤습니다.
+          튜링 테스트를 기준으로 쓰면 한 방향으로만 작동합니다(통과는 증거가 되지만 실패는 반증이 되지 않음). 반면 논문 속 튜링의 예측은 명확하게 반증 가능한 가설이었고, 실제로 시험을 거쳤습니다.
         </Callout>
         <Section heading="(1) 테스트는 충분조건일 뿐입니다 (튜링 본인의 주장)">
           <Text>
-            원문 1절에 이런 반론이 나옵니다. 기계가 인간과 매우 다른 방식으로 생각할 수도 있지 않은가? 튜링은 이렇게 답합니다. 그래도 기계가 게임을 잘 해낸다면 "we need not be troubled by this objection(이 반론에 신경 쓸 필요가 없다)". 즉 통과는 사고의 증거가 됩니다. 하지만 실패는 "기계는 생각하지 못한다"를 반증하지 못합니다. 연구 질문 2가 말한 "더 큰 기계" 도피로가 여기서 생깁니다. Dennett과 Shieber도 이 테스트를 개념적 충분조건으로 읽습니다(<a href={SRC.thought}>Minds and Machines 2022</a>).
+            원문 1절에는 기계가 인간과 매우 다른 방식으로 생각할 수도 있다는 반론이 나옵니다. 튜링은 그래도 기계가 게임을 잘 해낸다면 "we need not be troubled by this objection(이 반론에 신경 쓸 필요가 없다)"라고 답합니다. 즉 통과는 사고의 증거가 됩니다. 하지만 실패는 "기계는 생각하지 못한다"를 입증하지 못합니다. 이 비대칭 때문에 기계가 실패해도 "더 큰 기계"를 상상해 반증을 피할 수 있습니다(연구 질문 2). Dennett과 Shieber도 이 테스트를 개념적 충분조건으로 읽습니다(<a href={SRC.thought}>Minds and Machines 2022</a>).
           </Text>
         </Section>
-        <Section heading="(2) 그러나 튜링은 반증 가능한 예측을 따로 남겼습니다">
+        <Section heading="(2) 튜링은 반증 가능한 예측을 따로 남겼습니다">
           <Text>
-            원문 6절의 예측은 이렇습니다. 약 50년 뒤 저장 용량 10⁹ 수준의 컴퓨터를 상대로, 평균적인 질문자가 5분 대화 후 정답을 맞힐 확률은 70% 이하가 될 것이다. 시점, 시간, 임계값이 모두 정해진 Popper식 가설입니다.
+            원문 6절의 예측은 시점, 시간, 임계값이 모두 정해진 Popper식 가설입니다. 튜링은 약 50년 뒤 저장 용량 10⁹ 수준의 컴퓨터를 상대로, 평균적인 질문자가 5분 대화 후 정답을 맞힐 확률이 70% 이하가 될 것이라고 썼습니다.
           </Text>
-          <Text>2000년 무렵에는 달성되지 않았습니다(예측 시점 기준 실패).</Text>
+          <Text>2000년 무렵에는 예측이 맞지 않았습니다(예측 시점 기준 실패).</Text>
           <Text>
-            2025–26년에는 사전등록된 3자 튜링 테스트에서 GPT-4.5가 73%의 비율로 인간으로 판정되었습니다(<a href={SRC.pnas}>Jones &amp; Bergen, PNAS 2026</a>). 질문자의 정답률이 약 27%라는 뜻이므로, 튜링의 70% 임계값을 크게 밑돕니다. 다시 말해 예측은 약 25년 늦게 충족되었습니다.
+            2025–26년에는 사전등록된 3자 튜링 테스트에서 GPT-4.5가 73%의 비율로 인간으로 판정되었습니다(<a href={SRC.pnas}>Jones &amp; Bergen, PNAS 2026</a>). 즉 질문자의 정답률은 약 27%로, 튜링의 70% 임계값을 크게 밑돕니다. 예측은 약 25년 늦게 맞았습니다.
           </Text>
         </Section>
         <Section heading="(3) 통과도 결정적인 증거가 아닙니다 (구성 타당도 문제)">
@@ -371,10 +371,10 @@ export default function App() {
         </Section>
         <Section heading="벤치마크 과학에 주는 함의 (제 정리)">
           <Text>
-            벤치마크 점수도 같은 비대칭을 가집니다. 점수가 높으면 능력의 증거로 쓰입니다. 점수가 낮으면 "프롬프트가 나빴다", "모델이 작았다" 같은 보조가설로 쉽게 구제됩니다. 이는 Popper보다 Lakatos의 연구 프로그램 모델에 가깝습니다.
+            벤치마크 점수에도 같은 비대칭이 있습니다. 점수가 높으면 능력의 증거로 쓰입니다. 점수가 낮으면 "프롬프트가 나빴다", "모델이 작았다" 같은 보조가설로 쉽게 구제됩니다. 이 구조는 Popper보다 Lakatos의 연구 프로그램 모델과 더 닮았습니다.
           </Text>
           <Text>
-            벤치마크 주장을 반증 가능하게 만드는 방법은 튜링이 이미 보여주었습니다. 모델, 프롬프트, 예산, 임계값, 시점을 미리 고정하는 것입니다. Jones &amp; Bergen의 사전등록은 이 방식을 따랐습니다.
+            벤치마크 주장을 반증 가능하게 만드는 방법은 모델, 프롬프트, 예산, 임계값, 시점을 미리 고정하는 것입니다. 튜링이 이미 이 방법을 보여주었고, Jones &amp; Bergen의 사전등록도 이 방법을 따랐습니다.
           </Text>
         </Section>
       </Section>
@@ -382,9 +382,9 @@ export default function App() {
       <Section heading="후속 조사 3: ESP 반론의 현대적 재해석" id="esp">
         <Text>Q7 답변 끝의 연구 질문 3: 튜링이 우려한 "게임 외부 요인에 의한 교란"은 오늘날 데이터 누출, 벤치마크 오염, prompt injection과 구조적으로 같은가? 이 유비를 형식화하면 "검증 조건의 무결성"이라는 평가 틀이 나올 수 있는가?</Text>
         <Callout lead="결론">
-          유비는 성립하고, 상당 부분은 이미 형식화되어 있습니다. 새로 기여할 여지는 "통합된 위협 모델"에 있습니다.
+          유비(analogy)는 성립하고, 상당 부분은 이미 형식화되어 있습니다. 새로 기여할 여지는 "통합된 위협 모델"에 있습니다.
         </Callout>
-        <Text>튜링의 ESP 절을 다시 읽으면 유비가 생각보다 정밀합니다. 원문에는 세 가지 교란 경로가 나옵니다.</Text>
+        <Text>튜링의 ESP 절에는 교란 경로가 세 가지 나옵니다.</Text>
         <Steps
           steps={[
             { title: "증인이 텔레파시로 카드를 맞힘", detail: "400장 중 130장, 우연 기대치는 100장" },
@@ -393,7 +393,7 @@ export default function App() {
           ]}
         />
         <Text>
-          튜링의 처방은 "telepathy-proof room(텔레파시 차단실)"이고, 그는 이 상황을 "벽에 귀를 대고 엿듣는 경쟁자"에 비유했습니다. 이는 사실상 부채널(side channel) 공격 모델입니다.
+          튜링의 대책은 "telepathy-proof room(텔레파시 차단실)"입니다. 튜링은 이 상황을 "벽에 귀를 대고 엿듣는 경쟁자"에 비유했습니다. 이 비유는 사실상 부채널(side channel) 공격 모델입니다.
         </Text>
         <Table
           columns={["튜링의 교란 경로", "오늘날 대응 현상", "기존 형식화·대응"]}
@@ -447,7 +447,7 @@ export default function App() {
             ]}
           />
           <Text>
-            각 조건마다 부분적인 연구는 이미 있습니다. 하지만 보안 분야의 CIA 3요소처럼 하나의 위협 모델로 묶어 "어느 조건이 깨지면 어떤 결론이 무효가 되는가"를 정리한 틀은 이번 검색에서 찾지 못했습니다. 이 부분이 기여 지점이 될 수 있다고 봅니다. 다만 이번 검색이 빠짐없는 문헌 조사는 아니었습니다.
+            조건마다 부분적인 연구는 이미 있습니다. 하지만 보안 분야의 CIA 3요소(기밀성·무결성·가용성)처럼 하나의 위협 모델로 묶어 "어느 조건이 깨지면 어떤 결론이 무효가 되는가"를 정리한 틀은 이번 검색에서 찾지 못했습니다. 이런 틀을 만드는 일이 기여 지점이 될 수 있다고 봅니다. 다만 이번 검색이 빠짐없는 문헌 조사는 아니었습니다.
           </Text>
         </Section>
         <Callout lead="셋 중 하나를 더 판다면">
@@ -456,7 +456,7 @@ export default function App() {
       </Section>
 
       <Section heading="Moonlight AI 답변 검토 결과" id="verify">
-        <Text>틀림 6개, 부분 2개, 보충 2개, 해석 3개. 번호는 위 Q&A 상자의 번호와 같다.</Text>
+        <Text>판정은 틀림 6개, 부분 2개, 보충 2개, 해석 3개입니다. 번호는 위 Q&A 상자의 번호와 같습니다.</Text>
         <Table
           columns={["번호", "질문", "Moonlight AI 답변 내용", "판정"]}
           rows={Object.entries(NOTES).map(([id, note]) => [
@@ -466,7 +466,7 @@ export default function App() {
             note.verdict === "해석" ? note.verdict : { text: note.verdict, tone: note.verdict === "틀림" ? "danger" : "warning" },
           ])}
         />
-        <Section heading="원문과 대조해 맞은 AI 답변 내용 (22개)">
+        <Section heading="원문과 대조해 맞은 Moonlight AI 답변 내용 (22개)">
           <Table
             columns={["#", "AI 답변 내용", "원문 위치"]}
             rows={[

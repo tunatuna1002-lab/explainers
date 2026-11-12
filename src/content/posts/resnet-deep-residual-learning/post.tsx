@@ -87,7 +87,7 @@ function ShortcutLab() {
         rows={X.map((x, i) => [`칸 ${i + 1}`, String(x), out[i].toFixed(1)])}
       />
       <Properties items={[{ label: "원래 모양과 닮은 정도 (상관계수)", value: `${sim}%` }]} />
-      <Text>개념 그림입니다. 논문 실험 재현이 아닙니다. 모든 숫자는 예시입니다.</Text>
+      <Text>논문 실험을 재현하지 않은 개념 그림이고, 모든 숫자는 예시입니다.</Text>
     </>
   );
 }
@@ -140,7 +140,7 @@ function ActivationLab() {
           ["지름길 경로의 기울기", { text: String(grad), tone: grad === 1 ? "success" : "danger" }],
         ]}
       />
-      <Text>개념 예시입니다. 숫자는 예시이며, 실제 망에서는 원소마다 이 계산이 따로 일어납니다.</Text>
+      <Text>숫자는 개념을 보여 주는 예시입니다. 실제 망에서는 원소마다 이 계산이 따로 일어납니다.</Text>
     </>
   );
 }
@@ -236,7 +236,7 @@ function ResidualSumLab() {
     ` = ${fmtN(y)}, ReLU 뒤 출력 = max(0, ${fmtN(y)}) = ${fmtN(z)}`;
   const note =
     on && f === 0
-      ? `F(x) = 0입니다. 지름길이 입력을 그대로 보냅니다. y = x = ${fmtN(x)}이고 ReLU 뒤에도 같습니다. 이것이 항등 매핑입니다.`
+      ? `F(x) = 0이라 지름길로 온 입력만 남습니다. y = x = ${fmtN(x)}이고 ReLU 뒤에도 같으므로 블록이 항등 매핑이 됩니다.`
       : on
         ? `지름길은 입력 ${fmtN(x)}을 보존하고, 잔차 ${signed(f)}를 더합니다. "F(x)를 0으로"를 눌러 비교해 보십시오.`
         : "지름길을 끄면 합산 직후 값은 F(x)뿐입니다. 입력을 그대로 보내는 경로가 없습니다. 항등 매핑을 만들려면 층들이 F(x) = x를 직접 배워야 합니다.";
@@ -249,7 +249,7 @@ function ResidualSumLab() {
         {note}
       </Callout>
       <Slider id="rn-x" label="입력 x (예시)" value={x} min={0} max={10} step={1} show={fmtN(x)} onChange={setX} />
-      <Slider id="rn-f" label="잔차 F(x), 곧 더할 변화량 (예시)" value={f} min={-5} max={5} step={1} show={signed(f)} onChange={setF} />
+      <Slider id="rn-f" label="잔차 F(x), 곧 더할 수정분 (예시)" value={f} min={-5} max={5} step={1} show={signed(f)} onChange={setF} />
       <Segmented options={SHORTCUT_OPTIONS} value={sc} onChange={setSc} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <SmallButton onClick={() => setF(0)}>F(x)를 0으로</SmallButton>
@@ -318,8 +318,8 @@ function ResidualSumLab() {
 
 // 원 복습실 ② 표 2 비교. 값은 논문 표 2 그대로, 차이는 계산값.
 const T2 = [
-  { name: "일반망 18층 (plain-18)", depth: 18, error: 27.94, res: false },
-  { name: "일반망 34층 (plain-34)", depth: 34, error: 28.54, res: false },
+  { name: "평범한 망 18층 (plain-18)", depth: 18, error: 27.94, res: false },
+  { name: "평범한 망 34층 (plain-34)", depth: 34, error: 28.54, res: false },
   { name: "ResNet 18층", depth: 18, error: 27.88, res: true },
   { name: "ResNet 34층", depth: 34, error: 25.03, res: true },
 ];
@@ -346,7 +346,7 @@ function Table2Lab() {
   return (
     <>
       <Callout lead={`${d}층끼리 비교 (계산값)`} tone="info">
-        {`일반망 ${p.toFixed(2)} − ResNet ${r.toFixed(2)} = ${(p - r).toFixed(2)}%p 낮아졌습니다. ${
+        {`평범한 망 ${p.toFixed(2)} − ResNet ${r.toFixed(2)} = ${(p - r).toFixed(2)}%p 낮아졌습니다. ${
           d === 18 ? "18층에서는 거의 같습니다. 깊이를 34층으로 바꿔 보십시오." : "34층에서는 차이가 커집니다."
         }`}
       </Callout>
@@ -372,7 +372,7 @@ function Table2Lab() {
       />
       <Text>
         조건: ImageNet 검증 데이터, top-1 오류율(가장 높은 점수의 답이 틀린 비율), 10-crop(잘라낸 이미지 10개로 평가), 각 단일 모델입니다. ResNet은
-        차원이 늘 때 0으로 채우는 옵션 A를 써서 평범한 망과 파라미터 수가 같습니다 (p.5 §4.1, 표 2). 표 2는 검증 오류입니다. 학습 오류 곡선은 그림 4에서
+        차원이 늘 때 0으로 채우는 옵션 A를 써서 평범한 망과 파라미터 수가 같습니다 (p.5 §4.1, 표 2). 학습 오류 곡선은 그림 4에서
         따로 봅니다. 그림 4의 검증 곡선은 가운데 한 조각(center crop) 기준이므로 표 2의 10-crop 수치와 같은 조건으로 읽으면 안 됩니다.
       </Text>
     </>
@@ -430,7 +430,7 @@ function DimensionLab() {
 
 const QUIZ = [
   {
-    q: "지름길을 켰습니다. 입력 x = 5, 잔차 F(x) = 0이면 합산 직후 y는 얼마인가요?",
+    q: "지름길을 켰습니다. 입력 x = 5, 잔차 F(x) = 0이면 합산 직후 y는 얼마입니까?",
     source: "p.3 §3.2 식 (1), 예시 값",
     opts: ["0", "5", "10", "입력만으로 계산할 수 없다"],
     answer: 1,
@@ -442,7 +442,7 @@ const QUIZ = [
     ],
   },
   {
-    q: "§3.3의 옵션 A에서 채널 수를 늘리는 방법은 무엇인가요?",
+    q: "§3.3의 옵션 A에서 채널 수를 늘리는 방법은 무엇입니까?",
     source: "p.3~4 §3.3",
     opts: ["늘어난 칸을 0으로 채운다", "늘어난 칸을 1로 채운다", "지름길에 학습할 가중치를 반드시 추가한다", "잔차 경로를 없애고 입력만 쓴다"],
     answer: 0,
@@ -454,14 +454,14 @@ const QUIZ = [
     ],
   },
   {
-    q: "결과 절의 표 2 막대그래프가 나타내는 값은 무엇인가요?",
+    q: "결과 절의 표 2 막대그래프가 나타내는 값은 무엇입니까?",
     source: "p.5 표 2, 10-crop, 각 단일 모델",
     opts: ["ImageNet 학습 데이터의 top-1 오류", "ImageNet 테스트 데이터의 top-5 오류", "ImageNet 검증 데이터의 top-1 오류", "ImageNet 검증 데이터의 top-5 오류"],
     answer: 2,
     why: [
       "표 2는 검증 데이터의 오류입니다. 학습 오류 곡선은 그림 4에 있습니다.",
       "표 2는 테스트가 아니라 검증 데이터이고, 지표도 top-1입니다.",
-      "표 2는 ImageNet 검증 데이터의 top-1 오류를 10-crop으로 평가합니다.",
+      "표 2는 ImageNet 검증 데이터의 top-1 오류를 10-crop으로 평가한 값입니다.",
       "표 2의 지표는 top-5가 아니라 top-1 오류입니다.",
     ],
   },
@@ -526,7 +526,7 @@ export default function App() {
   return (
     <Page
       title="ResNet 쉽게 보기: 잔차 학습"
-      summary="층을 더 쌓았더니 학습 오차까지 커졌습니다. ResNet은 층이 결과 전체 H(x)가 아니라 입력에 더할 수정분 F(x)만 배우게 하고, 출력을 F(x) + x로 바꿔서 152층까지 깊이의 이득을 얻었습니다. 1년 뒤 후속 논문은 덧셈 뒤 ReLU까지 없애 지름길을 완전히 깨끗하게 만들었습니다. 잔차 합산, 표 2 비교, 차원 맞추기는 위젯으로 직접 계산해 보고, 끝의 확인 퀴즈로 점검합니다."
+      summary="층을 더 쌓았더니 학습 오차까지 커졌습니다. ResNet은 층이 결과 전체 H(x)가 아니라 입력에 더할 수정분 F(x)만 배우게 하고, 출력을 F(x) + x로 바꿨습니다. 이 방식으로 152층까지 깊이를 늘려 정확도를 높였습니다. 1년 뒤 후속 논문은 덧셈 뒤 ReLU까지 없애 지름길로 온 x가 다음 블록까지 그대로 가게 했습니다. 잔차 합산, 표 2 비교, 차원 맞추기는 위젯으로 직접 계산해 보고, 끝의 확인 퀴즈로 점검합니다."
       width="column"
       lang="ko"
     >
@@ -557,14 +557,14 @@ export default function App() {
         <Steps
           steps={[
             { title: "깊이는 중요합니다", detail: "당시 ImageNet 최고 결과는 16층(VGG)에서 30층(BN-Inception) 깊이의 모델이었습니다 (p.1 §1)." },
-            { title: "기울기 소실은 대부분 해결됐습니다", detail: "기울기 소실·폭발(vanishing/exploding gradients)은 정규화된 초기화와 배치 정규화(BN)로 대부분 해결됐다고 씁니다 (p.1 §1)." },
+            { title: "기울기 소실은 대부분 해결됐습니다", detail: "기울기 소실·폭발(vanishing/exploding gradients, 역전파 중 기울기가 너무 작아지거나 커지는 현상)은 정규화된 초기화와 배치 정규화(BN)로 대부분 해결됐다고 씁니다 (p.1 §1)." },
             { title: "그런데 깊을수록 나빠졌습니다", detail: "층을 더 쌓자 정확도가 포화된 뒤 빠르게 떨어졌습니다. 이것을 성능 저하 문제(degradation problem)라고 부릅니다." },
             { title: "과적합이 아닙니다", detail: "과적합이면 학습 오차는 낮고 테스트 오차만 높아야 합니다. 여기서는 학습 오차(training error)도 커졌습니다 (그림 1, 그림 4). 학습을 3배 더 해도 같았습니다 (p.5 각주 3)." },
-            { title: "표현 능력이 아니라 최적화 문제입니다", detail: "깊은 망은 얕은 망의 해를 표현할 수 있습니다. 문제는 학습이 그 해를 찾지 못한다는 점입니다. 저자는 수렴 속도가 매우 느릴 수 있다고 추측만 합니다 (p.5 §4.1)." },
+            { title: "표현 능력이 아니라 최적화 문제입니다", detail: "깊은 망은 얕은 망의 해를 표현할 수 있지만 학습으로 그 해를 찾지 못합니다. 저자는 수렴 속도(학습 오차가 줄어드는 빠르기)가 매우 느릴 수 있다고 추측만 합니다 (p.5 §4.1)." },
           ]}
         />
         <Callout lead="구성된 해 논증 (p.1 §1)" tone="info">
-          20층 망을 학습한 뒤 10층을 더 붙여 30층으로 만든다고 합시다. 붙인 10층이 입력을 그대로 내보내면, 30층 망은 20층 망과 똑같은 함수가 됩니다.
+          20층 망을 학습한 뒤 10층을 더 쌓아 30층으로 만든다고 합시다. 더 쌓은 10층이 입력을 그대로 내보내면, 30층 망은 20층 망과 똑같은 함수가 됩니다.
           따라서 깊은 망이 더 나쁠 이유가 없습니다. 그런데 학습 알고리즘(solver)은 이 해조차 찾지 못했습니다.
         </Callout>
         <Table
@@ -579,8 +579,8 @@ export default function App() {
       <Section heading="핵심 아이디어와 모델 구조" id="idea">
         <Section heading="항등 매핑">
           <Text>
-            항등 매핑(identity mapping)은 입력을 바꾸지 않고 그대로 내보내는 함수입니다. 입력이 5면 출력도 5입니다. 입력이 벡터 [1, 2, 3]이면 출력도
-            [1, 2, 3]입니다. 새로 붙인 층이 아직 쓸모 있는 변환을 찾지 못했다면, 입력을 그대로 넘기는 것이 합리적인 기본값입니다.
+            항등 매핑(identity mapping)은 입력을 바꾸지 않고 그대로 내보내는 함수입니다. 입력이 5면 출력도 5이고, 입력이 벡터 [1, 2, 3]이면 출력도
+            [1, 2, 3]입니다. 새로 쌓은 층이 아직 쓸모 있는 변환을 찾지 못했다면, 입력을 그대로 넘기는 것이 합리적인 기본값입니다.
           </Text>
         </Section>
         <Section heading="잔차 학습">
@@ -597,8 +597,8 @@ export default function App() {
             ]}
           />
           <Text>
-            저자의 가설은 이렇습니다. 최적 매핑이 항등 매핑에 가깝다면, 잔차를 0 쪽으로 보내는 편이 비선형 층 여러 개로 항등 매핑을 맞추는 것보다
-            쉽습니다 (p.3 §3.1). 다만 0은 목표가 아니라 기본 선택지입니다. 바꿀 것이 있으면 층은 그만큼의 수정분을 배웁니다.
+            최적 매핑이 항등 매핑에 가깝다면, 잔차를 0 쪽으로 보내는 편이 비선형 층 여러 개로 항등 매핑을 맞추는 것보다 쉽다는 것이 저자의
+            가설입니다 (p.3 §3.1). 다만 0은 목표가 아니라 기본값입니다. 바꿀 것이 있으면 층은 그만큼의 수정분을 배웁니다.
           </Text>
         </Section>
         <Section heading="직접 계산: 지름길에 잔차 더하기">
@@ -626,7 +626,7 @@ export default function App() {
             ]}
           />
           <Text>
-            입력 x는 두 경로로 나뉩니다. 잔차 경로(residual branch)는 F(x)를 계산합니다. 지름길(shortcut connection)은 x를 그대로 전달합니다. 두 결과를
+            입력 x는 두 경로로 나뉩니다. 잔차 경로(residual branch)는 F(x)를 계산하고, 지름길(shortcut connection)은 x를 그대로 전달합니다. 두 결과를
             원소별로 더한 뒤 ReLU를 한 번 더 씁니다 (p.3 §3.2). 지름길에는 가중치가 없어서 파라미터와 계산량이 늘지 않습니다. 차원이 달라지는 곳에서는
             세 방법을 비교했습니다 (p.4 §3.3, 표 3).
           </Text>
@@ -645,9 +645,10 @@ export default function App() {
         </Section>
         <Section heading="전체 망 (표 1)">
           <Text>
-            34층 평범한 망은 VGG 방식을 따릅니다. 3×3 합성곱을 쓰고, 특징 맵 크기가 반이 되면 필터 수를 두 배로 합니다 (p.3 §3.3). 다운샘플링은
-            conv3_1, conv4_1, conv5_1에서 stride 2로 합니다. 끝은 전역 평균 풀링, 1000-way 완전연결층, softmax입니다. 50층 이상은 병목
-            블록(bottleneck block)을 씁니다. 1×1(차원 축소), 3×3, 1×1(차원 복원) 세 층입니다 (그림 5).
+            34층 평범한 망(plain network, 지름길이 없는 망)은 VGG 방식을 따릅니다. 3×3 합성곱을 쓰고, 특징 맵(feature map, 합성곱 층이 내놓는 출력)
+            크기가 반이 되면 필터 수를 두 배로 합니다 (p.3 §3.3). 특징 맵 크기를 줄이는 다운샘플링(downsampling)은 conv3_1, conv4_1, conv5_1에서 보폭 2로
+            합니다. 끝은 전역 평균 풀링(특징 맵마다 평균 하나만 남기는 연산), 1000-way 완전연결층(클래스마다 점수 하나를 내는 층), softmax(점수를 확률로
+            바꾸는 함수)입니다. 50층 이상은 병목 블록(bottleneck block)을 씁니다. 1×1(차원 축소), 3×3, 1×1(차원 복원) 세 층입니다 (그림 5).
           </Text>
           <Table
             columns={["모델", "블록", "단계별 블록 수 (conv2~5)"]}
@@ -690,7 +691,7 @@ export default function App() {
               ["기타", "He 초기화, BN, 드롭아웃 없음"],
             ]}
           />
-          <Text>평범한 망과 잔차 망은 같은 방법으로 학습합니다. 지름길 말고는 차이가 없습니다.</Text>
+          <Text>평범한 망과 ResNet은 같은 방법으로 학습합니다. 지름길 말고는 차이가 없습니다.</Text>
         </Section>
       </Section>
 
@@ -723,7 +724,7 @@ export default function App() {
         <Section heading="더 깊은 망과 대회 결과">
           <Steps
             steps={[
-              { title: "ResNet-152 단일 모델", detail: "top-5 검증 오류율 4.49%로, 이전의 모든 앙상블 결과보다 좋습니다 (표 4)." },
+              { title: "ResNet-152 단일 모델", detail: "top-5 검증 오류율 4.49%로, 이전의 모든 앙상블(여러 모델의 예측을 합친 것) 결과보다 좋습니다 (표 4)." },
               { title: "앙상블", detail: "top-5 테스트 오류율 3.57%로 ILSVRC 2015 분류 1위입니다 (표 5)." },
               { title: "깊이의 이득", detail: "50/101/152층은 34층보다 확실히 좋고, 성능 저하가 보이지 않습니다 (p.6)." },
               { title: "다른 과제", detail: "COCO 검출 mAP@[.5, .95]가 6.0%p 올라 상대 28% 향상입니다. ImageNet 검출·위치 찾기, COCO 검출·분할도 1위입니다 (p.8)." },
@@ -764,7 +765,7 @@ export default function App() {
         />
         <Steps
           steps={[
-            { title: "지름길은 거의 공짜입니다", detail: "항등 지름길은 원소별 덧셈만 더합니다 (p.3 §3.2)." },
+            { title: "지름길은 계산을 거의 늘리지 않습니다", detail: "항등 지름길이 더하는 계산은 원소별 덧셈뿐입니다 (p.3 §3.2)." },
             { title: "병목 블록은 실용적 선택입니다", detail: "학습 시간을 감당하려고 병목 블록을 썼다고 밝힙니다 (p.6 각주 4)." },
             { title: "병목에는 항등 지름길이 중요합니다", detail: "사영으로 바꾸면 시간 복잡도와 모델 크기가 두 배가 됩니다. 지름길이 고차원 양 끝에 연결되기 때문입니다 (p.6)." },
             { title: "미확인", detail: "ImageNet 학습에 쓴 GPU 수와 학습 시간은 본문에 없습니다. CIFAR-10은 GPU 2개, COCO 검출은 GPU 8개를 썼습니다." },
@@ -790,7 +791,7 @@ export default function App() {
         <Callout lead="원논문 밖 내용" tone="warning">
           이 절은 2015년 원논문이 아니라 후속 연구의 내용입니다. 원논문의 주장과 섞지 않도록 구분해 읽으십시오.
         </Callout>
-        <Section heading="ResNet v2: 지름길을 완전히 깨끗하게 (He 외, 2016)">
+        <Section heading="ResNet v2: 덧셈 뒤를 비운 블록 (He 외, 2016)">
           <Text>
             후속 논문 Identity Mappings in Deep Residual Networks는 블록 안의 연산 순서를 바꿨습니다. 원래 블록은 덧셈 뒤에 ReLU가 있습니다. 이것을
             사후 활성화(post-activation)라고 부릅니다. 새 블록은 BN과 ReLU를 합성곱 앞으로 옮기고, 덧셈 뒤에는 아무 연산도 두지 않습니다. 이것을 완전
@@ -817,8 +818,8 @@ export default function App() {
           <Tex display>{"\\frac{\\partial E}{\\partial x_{l}} = \\frac{\\partial E}{\\partial x_{L}} \\left( 1 + \\frac{\\partial}{\\partial x_{l}} \\sum_{i=l}^{L-1} \\mathcal{F}(x_i, W_i) \\right)"}</Tex>
           <Steps
             steps={[
-              { title: "1이 핵심입니다", detail: "뒤쪽 기울기가 잔차 경로를 거치지 않고 앞쪽으로 그대로 전달되는 몫입니다. 벡터라면 1은 단위 행렬입니다." },
-              { title: "기울기가 지워지기 어렵습니다", detail: "괄호 안의 둘째 항이 미니배치의 모든 샘플에서 정확히 -1이 될 수는 없으므로, 기울기가 상쇄되어 사라질 가능성이 낮다고 씁니다 (v2 논문)." },
+              { title: "괄호 안의 1은 지름길 몫입니다", detail: "뒤쪽 기울기가 잔차 경로를 거치지 않고 앞쪽으로 그대로 전달되는 몫입니다. 벡터라면 1은 단위 행렬입니다." },
+              { title: "기울기가 상쇄되기 어렵습니다", detail: "괄호 안의 둘째 항이 미니배치의 모든 샘플에서 정확히 -1이 될 수는 없으므로, 기울기가 상쇄되어 사라질 가능성이 낮다고 씁니다 (v2 논문)." },
               { title: "조건이 있습니다", detail: "이 식은 덧셈 뒤가 항등일 때 정확합니다. v1처럼 덧셈 뒤에 ReLU가 있으면 그대로 성립하지 않습니다." },
               { title: "완전한 보장은 아닙니다", detail: "직접 경로가 있다고 기울기 소실이나 폭발이 수학적으로 불가능해지는 것은 아닙니다." },
             ]}
@@ -838,20 +839,19 @@ export default function App() {
           <Steps
             steps={[
               { title: "더 깊은 망", detail: "ResNet-1001에서 CIFAR-10 오류율이 7.61%에서 4.92%로, CIFAR-100은 27.82%에서 22.71%로 줄었습니다." },
-              { title: "ImageNet", detail: "ResNet-200 top-1 오류율이 21.8%에서 20.7%로 줄었습니다 (단일 크롭)." },
+              { title: "ImageNet", detail: "ResNet-200 top-1 오류율이 21.8%에서 20.7%로 줄었습니다 (한 조각으로 평가)." },
               { title: "지름길을 건드리면 나빠집니다", detail: "지름길에 상수 곱, 문(gate), 1×1 합성곱, 드롭아웃을 넣은 변형은 모두 원래 항등 지름길(6.61%)보다 나빴습니다. 일부는 학습에 실패했습니다." },
               { title: "주의", detail: "특정 구조, 데이터, 학습 조건에서 나온 실험 결과입니다. 모든 문제에서 사전 활성화가 낫다는 증명은 아닙니다." },
             ]}
           />
           <Text>
-            참고: 원논문 표 6의 ResNet-110 6.43%는 5회 중 최고값이고, 평균은 6.61%입니다. v2 논문은 5회 중앙값 6.61%를 기준으로 씁니다. 두 숫자는
-            충돌하지 않습니다.
+            참고: 원논문 표 6의 ResNet-110 6.43%는 5회 중 최고값이고, 평균은 6.61%입니다. v2 논문은 5회 중앙값 6.61%를 기준으로 씁니다.
           </Text>
         </Section>
         <Section heading="배치 정규화 해석의 변화">
           <Tex display>{"\\hat{x} = \\frac{x - \\mu_B}{\\sqrt{\\sigma_B^2 + \\epsilon}}, \\qquad y = \\gamma \\hat{x} + \\beta"}</Tex>
           <Text>
-            μB는 미니배치 평균, σB²는 미니배치 분산입니다. ε은 0으로 나누는 것을 막는 작은 수입니다. γ와 β는 학습되는 크기와 이동입니다. 그래서 BN 출력이
+            μB는 미니배치 평균, σB²는 미니배치 분산이고, ε은 0으로 나누는 것을 막는 작은 수입니다. γ와 β는 학습되는 크기와 이동이라서 BN 출력이
             늘 평균 0, 분산 1인 것은 아닙니다.
           </Text>
           <Table
@@ -862,17 +862,17 @@ export default function App() {
               ["후속 해석 (Santurkar 외, 2018)", "효과의 주된 이유가 손실 지형과 기울기를 더 매끄럽게 만드는 데 있다는 설명"],
             ]}
           />
-          <Text>원래 제안 동기와 후속 연구가 찾은 작동 원리는 구분해야 합니다.</Text>
+          <Text>원래 제안 동기와 후속 해석은 구분해야 합니다.</Text>
         </Section>
         <Section heading="손실 지형과 지름길 (Li 외, 2018)">
           <Text>
-            손실 지형(loss landscape)은 파라미터를 바꿀 때 손실이 어떻게 변하는지 보여 주는 지형입니다. 파라미터는 너무 많아서, 기준점 θ*에서 두 방향
+            손실 지형(loss landscape)은 파라미터를 바꿀 때 손실이 어떻게 변하는지 높낮이로 나타낸 것입니다. 파라미터는 너무 많아서, 기준점 θ*에서 두 방향
             δ, η만 골라 2차원으로 봅니다.
           </Text>
           <Tex display>{"L(\\theta^{*} + \\alpha\\,\\delta + \\beta\\,\\eta)"}</Tex>
           <Text>
             이 연구에서는 지름길이 있는 깊은 망의 지형이 더 매끄럽게 보였습니다. 다만 고차원에서 고른 두 방향만으로 최적화 전체를 설명할 수는 없습니다.
-            또한 이 설명은 원논문의 제안 동기가 아니라 나중에 나온 해석입니다.
+            이 설명은 원논문의 제안 동기가 아니라 나중에 나온 해석입니다.
           </Text>
         </Section>
         <Section heading="그 밖의 흐름">
@@ -932,7 +932,7 @@ export default function App() {
           <Text>
             답 요약: 최적 매핑이 항등 매핑이면, 평범한 블록은 층 묶음 전체가 H(x) = x를 근사해야 합니다. 잔차 블록은 F(x) = 0, 곧 가중치를 0 쪽으로
             보내면 됩니다. 예를 들어 ReLU 층 하나는 음수를 지우므로 혼자 항등 매핑이 될 수 없습니다. ReLU(x) − ReLU(−x) = x처럼 가중치를 +1과 −1로 정확히
-            짝지어야 합니다 (논문 밖, 직접 계산). 저자는 잔차 구조를 사전 조건화(preconditioning)라고 부릅니다.
+            짝지어야 합니다 (논문 밖, 직접 계산). 저자는 잔차 구조를 사전 조건화(preconditioning, 문제를 풀기 쉬운 형태로 미리 바꿔 두는 것)라고 부릅니다.
           </Text>
           <Text>논문 근거: p.2 §1, p.3 §3.1.</Text>
         </Section>
@@ -995,7 +995,7 @@ export default function App() {
           steps={[
             { title: "항등 매핑과 잔차 학습은 다릅니다", detail: "항등 매핑은 H(x) = x입니다. 잔차 학습은 H(x)를 x + F(x)로 만드는 방식입니다." },
             { title: "모든 잔차를 0으로 만드는 것이 목표가 아닙니다", detail: "필요하면 항등 매핑을 쉽게 고를 수 있게 하고, 필요한 변환은 계속 배웁니다." },
-            { title: "성능 저하는 과적합과 다릅니다", detail: "깊은 망의 학습 오차까지 높아지는 것이 핵심입니다." },
+            { title: "성능 저하는 과적합과 다릅니다", detail: "성능 저하에서는 깊은 망의 학습 오차까지 높아집니다." },
             { title: "BN의 원래 동기와 후속 해석을 나눕니다", detail: "내부 공변량 이동은 처음 제시된 설명이고, 손실 지형을 매끄럽게 한다는 것은 후속 해석입니다." },
             { title: "v2는 BN을 없앤 모델이 아닙니다", detail: "BN과 ReLU를 잔차 경로 앞으로 옮기고 덧셈 뒤를 비운 모델입니다." },
             { title: "지름길이 기울기 문제를 완전히 없애지는 않습니다", detail: "직접 경로가 생겨 최적화에 유리해질 뿐입니다." },

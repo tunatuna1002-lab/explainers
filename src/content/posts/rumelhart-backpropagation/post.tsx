@@ -120,7 +120,7 @@ const QAS: QA[] = [
     title: "이 논문의 핵심",
     question: "이 논문의 핵심이 뭐야?",
     where: "논문 전체 · 토론",
-    answer: "오차를 거꾸로 전파해 연결 가중치를 고치면 입력과 정답을 잇는 것뿐 아니라 은닉 유닛이 과제에 유용한 내부 표현을 스스로 학습한다는 것이 핵심이라고 답했다. 대칭 탐지와 가족 관계 과제로 이를 보였고, 저자들이 이 방법을 뇌의 학습 모델로 보지 않았다고 덧붙였다.",
+    answer: "오차를 거꾸로 전파해 연결 가중치를 고치면 입력과 정답을 잇는 것뿐 아니라 은닉 유닛이 과제에 유용한 내부 표현을 스스로 학습한다는 것이 핵심이라고 답했다. 대칭 탐지와 가계도 과제로 이를 보였고, 저자들이 이 방법을 뇌의 학습 모델로 보지 않았다고 덧붙였다.",
     verdict: '확인. 뇌 학습 모델이 아니라는 부분은 4쪽 첫 문단 "is not a plausible model of learning in brains"와 같다',
     notes: [],
   },
@@ -190,7 +190,7 @@ export default function App() {
   return (
     <Page
       title="역전파 논문 읽기 (Rumelhart 외, 1986)"
-      summary="요약: (1) Rumelhart·Hinton·Williams(1986) 역전파 논문을 Moonlight로 읽으며 물은 9개 질문을 논문 위치, 질문, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 답변에서 틀린 곳은 1개(논문에 없는 XOR 예제)이고, 부분 2개(가중치 감쇠의 목적, 인용 위치)와 보충 1개(기울기 합과 평균의 혼용)가 있습니다. (3) 스캔본 1쪽에 앞 논문이 함께 실려 있어, 그 문단을 역전파 논문으로 알고 물은 질문(Q3–Q6)도 그대로 남겼습니다."
+      summary="요약: (1) Rumelhart·Hinton·Williams(1986) 역전파 논문을 Moonlight로 읽으며 물은 9개 질문을 논문 위치, 답변 요약과 함께 정리하고 원문과 대조해 검증했습니다. (2) Moonlight AI 답변에서 틀린 곳은 1개(논문에 없는 XOR 예제)이고, 부분 2개(가중치 감쇠의 목적, 인용 위치)와 보충 1개(기울기 합과 평균의 혼용)가 있습니다. (3) 스캔본 1쪽에 앞 논문이 함께 실려 있어, 그 문단을 역전파 논문으로 알고 물은 질문(Q3–Q6)도 그대로 남겼습니다."
       width="column"
       lang="ko"
     >
@@ -216,7 +216,7 @@ export default function App() {
           ]}
         />
         <Text>
-          Q&A마다 내 질문, 논문 위치, 선택한 원문, Moonlight AI 답변 요약, 검증 결과를 적었다. 검증은 OCR한 원문, Nature 게재 정보, 웹 출처와 대조했다. AI 답변 중 문제가 있는 문장은 바로 아래 상자에 판정과 함께 적었다.
+          Q&A마다 내 질문, 논문 위치, 선택한 원문, Moonlight AI 답변 요약, 검증 결과를 적었습니다. OCR한 원문, Nature 게재 정보, 웹 출처와 대조해 검증했습니다. Moonlight AI 답변 중 문제가 있는 문장은 그 Q&A 바로 아래 상자에 판정과 함께 적었습니다.
         </Text>
         <Table
           columns={["판정", "뜻"]}
@@ -231,21 +231,21 @@ export default function App() {
       </Section>
 
       <Section heading="Q&A 1: 문장을 짚어 물은 질문 (Q1–Q6)" id="qa-thread">
-        <Text>논문의 문장을 선택해 물은 질문이다. Q4–Q6은 Q3 스레드에서 이어서 물었다.</Text>
+        <Text>논문의 문장을 선택해 물은 질문입니다. Q4–Q6은 Q3 스레드에서 이어서 물었습니다.</Text>
         {QAS.slice(0, 6).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
       </Section>
 
       <Section heading="Q&A 2: 논문 전체에 대해 물은 질문 (Q7–Q9)" id="qa-discuss">
-        <Text>오른쪽 사이드바의 토론 창에서 논문 전체를 두고 물은 질문이다.</Text>
+        <Text>오른쪽 사이드바의 토론 창에서 논문 전체를 두고 물은 질문입니다.</Text>
         {QAS.slice(6).map((qa) => (
           <QABlock key={qa.n} qa={qa} />
         ))}
       </Section>
 
       <Section heading="Moonlight AI 답변 검토 결과" id="verify">
-        <Text>틀림 1개, 부분 2개, 보충 1개. 번호는 위 Q&A 상자의 번호와 같다.</Text>
+        <Text>판정은 틀림 1개, 부분 2개, 보충 1개입니다. 번호는 위 Q&A 상자의 번호와 같습니다.</Text>
         <Table
           columns={["번호", "질문", "Moonlight AI 답변 내용", "판정"]}
           rows={Object.entries(NOTES).map(([id, note]) => [
@@ -255,7 +255,7 @@ export default function App() {
             note.verdict === "해석" ? note.verdict : { text: note.verdict, tone: note.verdict === "틀림" ? "danger" : "warning" },
           ])}
         />
-        <Section heading="원문과 대조해 맞은 AI 답변 내용 (21개)">
+        <Section heading="원문과 대조해 맞은 Moonlight AI 답변 내용 (21개)">
           <Table
             columns={["#", "AI 답변 내용", "원문 위치"]}
             rows={[
