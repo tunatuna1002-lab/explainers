@@ -144,3 +144,5 @@
 .s2s ul{list-style:disc}
 .s2s ol{list-style:decimal}
 .s2s strong,.s2s b{font-weight:700}
+/* 번호 원: .node span 규칙(회색 작은 글씨, 한 줄 차지)이 덮어써 숫자가 안 보이고 제목 위에 빈 줄이 생기던 문제를 막는다. */
+.s2s .node .stage-num{display:inline-flex;vertical-align:middle;margin:0 8px 2px 0;color:var(--text-on-primary);background:var(--fill-accent);font-size:13px;font-weight:700;line-height:1}
