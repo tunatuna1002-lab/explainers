@@ -21,6 +21,7 @@ import { Tex } from "@/components/Tex";
 // 실험 3~7과 확률·학습·디코딩·BLEU 절은 2026-11-12 질문 정리 글(seq2seq_blog.html)을 원문과 대조해 옮겼다.
 
 const NEXT_POST = "/posts/bahdanau-attention-align-translate/";
+const APPENDIX = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/appendix/seq2seq-questions.html`;
 
 // ---------- 작은 부품 ----------
 
@@ -1156,6 +1157,7 @@ export default function App() {
           { label: "논문 근거 위치", id: "evidence" },
           { label: "주의: 결과를 읽는 법", id: "caution" },
           { label: "확인 질문과 답", id: "quiz" },
+          { label: "부록: 질문 정리 원본", id: "appendix" },
           { label: "출처", id: "source" },
         ]}
       />
@@ -1674,6 +1676,22 @@ export default function App() {
       <Section heading="확인 질문과 답" id="quiz">
         <Text>보기를 고르면 정답 여부와 해설, 논문 위치가 나옵니다.</Text>
         <Quiz />
+      </Section>
+
+      <Section heading="부록: 질문 정리 원본" id="appendix">
+        <Text>
+          이 글의 실험 3~7과 학습·디코딩·BLEU 절은 한 편의 질문 정리 글을 원문과 대조해 옮긴 것입니다. 그 원본 HTML을 고치지 않고
+          그대로 올렸습니다. 원본에는 17개 절과 위젯 6개, 이 글에서 줄인 계산 예시가 모두 들어 있습니다.
+        </Text>
+        <Text>
+          <a href={APPENDIX}>Seq2Seq를 이해하는 질문들 (원본 HTML)</a>
+        </Text>
+        <Callout lead="원본과 이 글이 다른 곳" tone="warning">
+          원본은 고치지 않았으므로 아래 네 곳은 이 글을 기준으로 읽으십시오. (1) LSTM 식: 저자들은 peephole 연결이 있는 Graves(2013)의 식을
+          썼습니다 (p.3, §2). (2) 시작 기호: 논문 그림 1에는 {"<BOS>"}가 없고 입력 끝 {"<EOS>"}가 그 역할을 합니다 (p.2). (3) 학습률:
+          0.7에서 시작해 5에폭 뒤부터 반 에폭마다 절반으로 줄였습니다 (p.5, §3.4). (4) 원본 14절의 "원논문의 기본 설정 N = 4"는
+          Seq2Seq 논문이 아니라 BLEU 논문(Papineni 외, §2.3)의 설정입니다.
+        </Callout>
       </Section>
 
       <Section heading="출처" id="source">
