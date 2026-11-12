@@ -26,13 +26,13 @@ const NOTES: Record<string, Note> = {
   v1: {
     verdict: "보충",
     claim: '공유 가중치의 기울기를 "합쳐" 한 번에 업데이트한다. PyTorch는 "하나의 W.grad에 모은다"',
-    body: '논문은 대응하는 가중치들의 기울기를 평균한다("we average ∂E/∂w for all the weights in each set of corresponding weights", Fig. 5 설명 글). 답변 본문도 뒤에서는 평균으로 설명하지만, 첫 요약은 "합쳐"라고 쓰고 PyTorch 코드는 합(sum)을 쓴다. 평균과 합은 복사본 수만큼의 배수 차이라 학습률로 맞출 수 있어 틀린 것은 아니다. 다만 한 답변 안에서 섞여 헷갈릴 수 있다.',
+    body: '저자들은 대응하는 가중치들의 기울기를 평균한다("we average ∂E/∂w for all the weights in each set of corresponding weights", Fig. 5 설명 글). 답변 본문도 뒤에서는 평균으로 설명하지만, 첫 요약은 "합쳐"라고 쓰고 PyTorch 코드는 합(sum)을 쓴다. 평균과 합은 복사본 수만큼의 배수 차이라 학습률로 맞출 수 있어 틀린 것은 아니다. 다만 한 답변 안에서 섞여 헷갈릴 수 있다.',
     links: [{ label: "PyTorch autograd.backward 문서", href: SRC.torch }],
   },
   v2: {
     verdict: "부분",
     claim: "가중치 감쇠는 가중치가 지나치게 커지는 것을 막기 위해 학습 중 조금씩 줄이는 방법이다",
-    body: '논문이 가중치 감쇠를 넣은 이유는 가중치를 해석하기 쉽게 하려는 것이다("To make it easier to interpret the weights we introduced \'weight-decay\'"). 그 결과 최종 가중치 크기가 오차를 줄이는 데의 유용성을 나타낸다. 큰 가중치를 막는 장치는 바로 뒤 문장의 0.8/0.2 허용 범위다(3쪽, Fig. 4 설명 글).',
+    body: '저자들이 가중치 감쇠를 넣은 이유는 가중치를 해석하기 쉽게 하려는 것이다("To make it easier to interpret the weights we introduced \'weight-decay\'"). 그 결과 최종 가중치 크기가 오차를 줄이는 데의 유용성을 나타낸다. 큰 가중치를 막는 장치는 바로 뒤 문장의 0.8/0.2 허용 범위다(3쪽, Fig. 4 설명 글).',
   },
   v3: {
     verdict: "부분",

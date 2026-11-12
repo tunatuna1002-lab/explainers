@@ -129,7 +129,7 @@ const QAS: QA[] = [
     title: "요약이 결론을 거꾸로 보이게 했나",
     question: "nnlm을 보여주려고 했지만 사실은 거꾸로인건가?",
     where: "8쪽 표 4, 9쪽 표 6",
-    answer: "반은 맞다고 답했다. 논문은 NNLM을 큰 자원으로 만든 강한 기준선으로 두고, 굵은 글씨로 NNLM 문법 64.5%, Skip-gram 의미 50.0%와 전체 53.3%를 표시했다. Moonlight AI 요약이 학습 데이터 조건을 빼서 거꾸로 읽히게 했다. 같은 6B 데이터의 표 6에서는 word2vec이 모든 항목에서 앞서지만 차원(100 대 1000)이 다르다고 덧붙였다.",
+    answer: "반은 맞다고 답했다. 저자들은 NNLM을 큰 자원으로 만든 강한 기준선으로 두고, 굵은 글씨로 NNLM 문법 64.5%, Skip-gram 의미 50.0%와 전체 53.3%를 표시했다. Moonlight AI 요약이 학습 데이터 조건을 빼서 거꾸로 읽히게 했다. 같은 6B 데이터의 표 6에서는 word2vec이 모든 항목에서 앞서지만 차원(100 대 1000)이 다르다고 덧붙였다.",
     verdict: "확인. 표 4의 굵은 글씨, 표 6 설명 글 'training of NNLM with 1000-dimensional vectors would take too long to complete'",
     notes: [],
   },

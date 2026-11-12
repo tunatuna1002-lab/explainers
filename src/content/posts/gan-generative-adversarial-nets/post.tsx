@@ -536,7 +536,7 @@ export default function App() {
       <Section heading="한 장면 비유" id="analogy">
         <Text>
           생성자는 위조지폐를 만들어 들키지 않고 쓰려는 위조범 팀입니다. 판별자는 위조지폐를 찾아내려는 경찰입니다. 둘이
-          겨루면서 서로 실력이 늘고, 끝내 위조지폐가 진짜와 구별되지 않게 됩니다. 이 비유는 논문이 직접 듭니다 (p.1, §1).
+          겨루면서 서로 실력이 늘고, 끝내 위조지폐가 진짜와 구별되지 않게 됩니다. 이 비유는 저자들이 논문에 직접 쓴 것입니다 (p.1, §1).
         </Text>
         <Callout lead="원문 (p.1)">
           "The generative model can be thought of as analogous to a team of counterfeiters, trying to produce fake
@@ -638,13 +638,13 @@ export default function App() {
         </Text>
         <AlgorithmLab />
         <Text>
-          화면의 갱신 횟수는 누른 단계 수로 셉니다. 실제 손실, 정확도, 학습 속도는 계산하지 않습니다. 논문은 실험에서 가장 싼
+          화면의 갱신 횟수는 누른 단계 수로 셉니다. 실제 손실, 정확도, 학습 속도는 계산하지 않습니다. 저자들은 실험에서 가장 싼
           선택인 k = 1을 썼고, 갱신 규칙으로는 모멘텀(momentum, 직전 갱신 방향을 일부 이어 가는 방식)을 썼다고 밝힙니다 (p.4,
           알고리즘 1).
         </Text>
         <Callout lead="실제로 G가 배우는 식 (p.3, §3)">
           학습 초반에는 G가 서툴러서 D가 가짜를 쉽게 거부합니다. 그러면 log(1 - D(G(z)))가 포화해(saturate, 값이 거의 변하지
-          않아) 미분 신호가 약합니다. 그래서 논문은 G가 log(1 - D(G(z)))를 줄이는 대신 log D(G(z))를 키우도록 학습할 수
+          않아) 미분 신호가 약합니다. 그래서 저자들은 G가 log(1 - D(G(z)))를 줄이는 대신 log D(G(z))를 키우도록 학습할 수
           있다고 씁니다. 두 목표의 도달점은 같고, 바꾼 목표 쪽이 초반 미분 신호가 훨씬 강합니다.
         </Callout>
       </Section>
