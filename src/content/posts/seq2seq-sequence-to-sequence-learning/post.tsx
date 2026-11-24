@@ -506,60 +506,80 @@ const RESCORE: Res[] = [
 const score = (x: number) => (x === 36.5 ? "36.5" : x.toFixed(2));
 const modelName = (m: number) => (m === 1 ? "단일 1개" : `${m}개 앙상블`);
 
-type Mode = "direct" | "rescore";
+// 표 1·2의 다른 시스템 행 (비교 대상, 논문 값)
+const OTHERS = [
+  { label: "Bahdanau et al. · 어텐션 · 직접 번역", score: 28.45, display: "28.45", note: "다음 글에서 다루는 어텐션 모델의 결과입니다", src: "p.6, 표 1" },
+  { label: "Cho et al. · 신경망 + 기존 SMT", score: 34.54, display: "34.54", note: "신경망을 기존 통계 번역기와 함께 쓴 방법입니다", src: "p.6, 표 2" },
+  { label: "당시 WMT'14 최고 결과", score: 37.0, display: "37.0", note: "대회 전체에서 가장 높았던 시스템입니다", src: "p.6, 표 2" },
+  { label: "오라클 재순위 (후보 1,000개 중 최선)", score: 45, display: "~45", note: "후보 안에서 가장 좋은 번역을 안다고 가정한 상한선입니다. 논문도 약 45로만 적습니다", src: "p.6, 표 2" },
+];
+
+type Mode = "direct" | "rescore" | "others";
 
 function ResultLab() {
   const [mode, setMode] = useState<Mode>("direct");
   const [idx, setIdx] = useState(5);
   const rows = mode === "direct" ? DIRECT : RESCORE;
-  const i = Math.min(idx, rows.length - 1);
-  const cur = rows[i];
-  const delta = cur.score - BASE;
+  const count = mode === "others" ? OTHERS.length : rows.length;
+  const i = Math.min(idx, count - 1);
+  const cur = mode === "others" ? null : rows[i];
+  const other = mode === "others" ? OTHERS[i] : null;
+  const curScore = other ? other.score : cur!.score;
+  const delta = curScore - BASE;
   const cond =
     mode === "direct"
-      ? `${cur.reverse ? "역순" : "정방향"} LSTM · ${modelName(cur.models)} · 빔 ${cur.beam} · 직접 번역`
-      : `${cur.reverse ? "역순" : "정방향"} LSTM · ${modelName(cur.models)} · 기존 SMT 후보 1,000개 재순위`;
+      ? `${cur!.reverse ? "역순" : "정방향"} LSTM · ${modelName(cur!.models)} · 빔 ${cur!.beam} · 직접 번역`
+      : mode === "rescore"
+        ? `${cur!.reverse ? "역순" : "정방향"} LSTM · ${modelName(cur!.models)} · 기존 SMT 후보 1,000개 재순위`
+        : `${other!.label} · ${other!.note} (${other!.src})`;
   const bars = useMemo(
     () => [
       { label: "기준선 (기존 SMT)", value: BASE, display: BASE.toFixed(2) },
-      ...rows.map((r) => ({
-        label: `${r.reverse ? "역순" : "정방향"} · ${modelName(r.models)}${mode === "direct" ? ` · 빔 ${r.beam}` : ""}`,
-        value: r.score,
-        display: score(r.score),
-      })),
+      ...(mode === "others"
+        ? OTHERS.map((o) => ({ label: o.label, value: o.score, display: o.display }))
+        : rows.map((r) => ({
+            label: `${r.reverse ? "역순" : "정방향"} · ${modelName(r.models)}${mode === "direct" ? ` · 빔 ${r.beam}` : ""}`,
+            value: r.score,
+            display: score(r.score),
+          }))),
     ],
     [mode, rows],
   );
+  const lastIndex = (m: Mode) => (m === "others" ? OTHERS.length : (m === "direct" ? DIRECT : RESCORE).length) - 1;
   return (
     <Lab>
       <Callout lead="이 화면에서 볼 것" tone="info">
         직접 번역과 재순위를 구분합니다. 직접 번역에서는 LSTM이 번역을 만들고, 재순위에서는 기존 통계 번역기(SMT)가 낸 후보의
-        순위만 다시 매깁니다. 숫자는 논문 값입니다 (p.6, 표 1·2).
+        순위만 다시 매깁니다. "다른 시스템"에서는 같은 표에 함께 실린 비교 대상을 봅니다. 숫자는 논문 값입니다 (p.6, 표 1·2).
       </Callout>
       <Segmented
         options={[
           { value: "direct" as const, label: "직접 번역 (표 1)" },
           { value: "rescore" as const, label: "재순위 (표 2)" },
+          { value: "others" as const, label: "다른 시스템 (표 1·2)" },
         ]}
         value={mode}
         onChange={(m) => {
           setMode(m);
-          setIdx((m === "direct" ? DIRECT : RESCORE).length - 1);
+          setIdx(lastIndex(m));
         }}
       />
-      <Slider id="res-i" label="표에 있는 조건 고르기" value={i} min={0} max={rows.length - 1} show={`${i + 1} / ${rows.length}`} onChange={setIdx} />
+      <Slider id="res-i" label="표에 있는 조건 고르기" value={i} min={0} max={count - 1} show={`${i + 1} / ${count}`} onChange={setIdx} />
       <Text>선택 조건: {cond}</Text>
       <Bars bars={bars} emphasis={i + 1} />
       <Text>
-        표의 값으로 계산한 차이: {cur.score.toFixed(2)} − {BASE.toFixed(2)} = {delta >= 0 ? "+" : ""}
+        표의 값으로 계산한 차이: {other ? other.display : curScore.toFixed(2)} − {BASE.toFixed(2)} = {other && other.display.startsWith("~") ? "약 " : ""}
+        {delta >= 0 ? "+" : ""}
         {delta.toFixed(2)} BLEU
       </Text>
       <Small>
         공통 평가: WMT'14 영어→프랑스어 시험 세트 ntst14, 대소문자를 구분하는 BLEU(정답 번역과 겹치는 표현으로 매기는 점수) (p.5,
-        §3.6). 제안 모델의 행과 기준선만 옮겼습니다. 없는 조건의 점수는 추정하지 않습니다.{" "}
+        §3.6). 표에 있는 행만 옮겼습니다. 없는 조건의 점수는 추정하지 않습니다.{" "}
         {mode === "direct"
           ? "최고 직접 번역 결과도 당시 모든 시스템 중 최고는 아니었습니다 (p.5, §3.6)."
-          : "재순위: 기존 SMT의 1,000개 후보마다 LSTM 로그 확률을 구하고, SMT 점수와 같은 비율로 평균해 순위를 다시 정합니다 (p.4, §3.2)."}
+          : mode === "rescore"
+            ? "재순위: 기존 SMT의 1,000개 후보마다 LSTM 로그 확률을 구하고, SMT 점수와 같은 비율로 평균해 순위를 다시 정합니다 (p.4, §3.2)."
+            : "다른 시스템은 이 논문의 모델이 아닙니다. 같은 시험 세트에서 비교하려고 표에 함께 실린 값입니다."}
       </Small>
     </Lab>
   );
@@ -601,6 +621,32 @@ const QUIZ = [
     hint: "위의 결과 실험에서 직접 번역과 재순위의 조건을 확인하십시오.",
     why: "34.81은 역순 모델 5개 앙상블, 빔 12, 직접 번역 결과입니다. 재순위 최고 점수는 36.5입니다.",
     source: "p.6, 표 1",
+  },
+  {
+    q: "역순 LSTM 5개 앙상블에서 빔 크기를 1 → 2 → 12로 늘렸을 때 맞는 설명은 무엇입니까?",
+    options: [
+      "빔 2만으로 빔 탐색 이득의 대부분을 얻었습니다(33.00 → 34.50, 그다음 12에서 +0.31).",
+      "빔 1에서는 번역이 거의 되지 않아 BLEU가 10점 아래로 떨어졌습니다.",
+      "빔 12로 늘리자 BLEU가 45 가까이 올랐습니다.",
+      "빔 탐색은 모든 후보를 끝까지 계산하므로 항상 최선의 번역을 찾습니다.",
+    ],
+    correct: 0,
+    hint: "실험 4의 직접 번역에서 빔 1·2·12 행을 차례로 보십시오.",
+    why: "33.00 → 34.50(+1.50) → 34.81(+0.31)입니다. 저자들도 빔 1로도 잘 작동하고, 빔 2가 빔 탐색 이득의 대부분을 준다고 씁니다. 빔 탐색은 근사 방법이라 최선을 보장하지 않습니다.",
+    source: "p.4, §3.2; p.6, 표 1",
+  },
+  {
+    q: "학습된 문장 표현(그림 2)과 긴 문장 결과(그림 3)에 대해 논문이 보고한 것은 무엇입니까?",
+    options: [
+      "단어가 몇 번 나왔는지만 담아서, 주어와 목적어가 바뀐 문장을 구별하지 못합니다.",
+      "단어 순서가 바뀌면 다르게 표현하지만 능동태를 수동태로 바꾸는 데에는 비교적 둔감하고, 35단어 미만 문장에서는 성능 저하가 없습니다.",
+      "15단어를 넘으면 성능이 급격히 떨어져 기준선보다 10점 넘게 낮아집니다.",
+      "문장이 길어지면 벡터의 크기도 그만큼 커집니다.",
+    ],
+    correct: 1,
+    hint: "그림 2의 두 투영과 그림 3의 문장 길이 그래프 설명을 떠올리십시오.",
+    why: "그림 2 설명은 표현이 단어 순서에 민감하고 능동태→수동태 바꿈에는 비교적 둔감하다고 씁니다. 그림 3 설명은 35단어 미만에서 저하가 없고 가장 긴 문장에서만 조금 떨어진다고 씁니다. 벡터 크기는 문장 길이와 관계없이 고정입니다.",
+    source: "p.6–7, §3.7–3.8, 그림 2·3",
   },
 ];
 
